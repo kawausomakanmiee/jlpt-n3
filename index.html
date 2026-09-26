@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JLPT N3 読解診断</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FDF3FF; --card:#FFFFFF; --ink:#241A3D; --muted:#7A6E93; --line:#EBDFFB;
+  --coral:#FF3E6C; --coral-dark:#E01450; --teal:#00D9B5; --violet:#7B3FF2; --amber:#FFC400;
+  --sky:#2EC4FF; --lime:#B6E900;
+  --good:#12B673; --good-bg:#DFFBEC; --bad:#FF3B4E; --bad-bg:#FFE3E6;
+  --radius:22px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#170F2B; --card:#241A3F; --ink:#F5EEFF; --muted:#B9ADD6; --line:#3A2C5C;
+    --good-bg:#0F3A2A; --bad-bg:#421521;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#170F2B; --card:#241A3F; --ink:#F5EEFF; --muted:#B9ADD6; --line:#3A2C5C;
+  --good-bg:#0F3A2A; --bad-bg:#421521;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0; color:var(--ink);
+  background:
+    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--sky) 22%, transparent), transparent 45%),
+    radial-gradient(circle at 100% 12%, color-mix(in srgb, var(--coral) 20%, transparent), transparent 42%),
+    radial-gradient(circle at 90% 90%, color-mix(in srgb, var(--amber) 22%, transparent), transparent 45%),
+    radial-gradient(circle at 0% 85%, color-mix(in srgb, var(--teal) 20%, transparent), transparent 45%),
+    var(--bg);
+  background-attachment:fixed;
+  font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 8px);
+  line-height:1.7;
+}
+.wrap{max-width:640px;margin:0 auto;padding:20px 16px 130px}
+h1,h2,h3{line-height:1.35;margin:0 0 10px;font-weight:900}
+h1{font-size:26px}
+h2{font-size:19px}
+h3{font-size:16px}
+.muted{color:var(--muted)}
+.card{
+  background:var(--card); border:2px solid var(--line); border-radius:var(--radius);
+  padding:22px; margin:16px 0; box-shadow:0 12px 0 rgba(123,63,242,.08), 0 14px 28px rgba(123,63,242,.10);
+}
+button{font-family:inherit;border:0;cursor:pointer}
+.bigbtn{
+  width:100%; padding:16px 20px; border-radius:16px; font-size:17px; font-weight:900;
+  background:linear-gradient(135deg,var(--coral),var(--violet)); color:#fff;
+  box-shadow:0 6px 0 var(--coral-dark), 0 10px 20px rgba(224,20,80,.3);
+  transition:transform .1s ease;
+}
+.bigbtn:active:not(:disabled){transform:translateY(3px)}
+.bigbtn:disabled{opacity:.4; box-shadow:none; cursor:not-allowed}
+.bigbtn.secondary{background:var(--card); color:var(--ink); border:2px solid var(--line); box-shadow:none}
+.choice{
+  display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+  background:var(--card); border:2.5px solid var(--line); border-radius:999px;
+  padding:14px 18px; margin:10px 0; font-size:16px; font-weight:700; color:var(--ink);
+  transition:transform .12s ease, border-color .12s ease;
+}
+.choice:active{transform:scale(.98)}
+.choice .letter{
+  flex:0 0 30px; height:30px; border-radius:50%; background:var(--bg); border:2.5px solid var(--line);
+  display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px;
+}
+.choice.selected{border-color:var(--violet); background:color-mix(in srgb, var(--violet) 12%, var(--card))}
+.choice.selected .letter{background:var(--violet); border-color:var(--violet); color:#fff}
+.choice.locked{cursor:default}
+.choice.correct{border-color:var(--good); background:var(--good-bg)}
+.choice.correct .letter{background:var(--good); border-color:var(--good); color:#fff}
+.choice.wrongpick{border-color:var(--bad); background:var(--bad-bg)}
+.choice.wrongpick .letter{background:var(--bad); border-color:var(--bad); color:#fff}
+.passage{
+  white-space:pre-wrap; background:color-mix(in srgb, var(--teal) 10%, var(--bg));
+  border-left:6px solid var(--teal);
+  padding:18px; border-radius:12px; margin:16px 0; font-size:16.5px;
+}
+.progress-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;font-size:14px;font-weight:700}
+.progress{height:12px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:18px}
+.bar{height:100%;width:0;background:linear-gradient(90deg,var(--sky),var(--teal),var(--lime),var(--amber),var(--coral),var(--violet));background-size:300% 100%;transition:width .25s ease}
+.timerbox{font-weight:900;font-size:16px}
+.timerbox.over{color:var(--coral-dark)}
+.resultbanner{
+  display:flex; align-items:center; gap:10px; padding:14px 16px; border-radius:14px; font-weight:900; font-size:17px;
+  margin:16px 0 6px;
+}
+.resultbanner.good{background:var(--good-bg); color:var(--good)}
+.resultbanner.bad{background:var(--bad-bg); color:var(--bad)}
+.explain{border-top:2px dashed var(--line); margin-top:16px; padding-top:14px}
+.explain h4{margin:14px 0 6px; font-size:14px; color:var(--violet)}
+.explain p{margin:0 0 4px; font-size:15px}
+textarea{
+  width:100%; min-height:70px; padding:12px; border:2px solid var(--line); border-radius:12px;
+  font:inherit; font-size:15px; background:var(--card); color:var(--ink); resize:vertical;
+}
+.actionbar{
+  position:fixed; left:0; right:0; bottom:0; z-index:20;
+  background:var(--card); border-top:1px solid var(--line);
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));
+  box-shadow:0 -6px 20px rgba(0,0,0,.06);
+}
+.actionbar-inner{max-width:640px;margin:0 auto}
+.hidden{display:none!important}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+.stat{border-radius:16px;padding:14px;text-align:center;color:#fff}
+.stat:nth-child(1){background:linear-gradient(135deg,var(--coral),var(--violet))}
+.stat:nth-child(2){background:linear-gradient(135deg,var(--sky),var(--violet))}
+.stat:nth-child(3){background:linear-gradient(135deg,var(--teal),var(--sky))}
+.stat span{display:block;font-size:12px;opacity:.85;margin-bottom:4px}
+.stat b{font-size:22px}
+.tipcard{border-radius:16px;padding:14px 16px;margin:10px 0;background:color-mix(in srgb, var(--violet) 6%, var(--bg));border:2px solid var(--line)}
+.tipcard .toprow{display:flex;justify-content:space-between;font-weight:800;font-size:15px;margin-bottom:6px;gap:10px}
+.tipbar{height:9px;border-radius:99px;background:var(--line);overflow:hidden}
+.tipbar > div{height:100%;background:linear-gradient(90deg,var(--teal),var(--violet))}
+.tag{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--amber);color:#4A3300;margin-left:6px}
+.tag.low{background:var(--line);color:var(--muted)}
+.review{border-top:1px solid var(--line);padding:16px 0}
+.review h3{margin:0 0 6px}
+.small{font-size:13px}
+input[type=text]{
+  width:100%;padding:13px;border:2px solid var(--line);border-radius:12px;margin-top:6px;
+  font:inherit;font-size:15px;background:var(--card);color:var(--ink);
+}
+label{font-weight:700;font-size:15px}
+ul{padding-left:22px;margin:8px 0}
+@media(max-width:480px){h1{font-size:22px}.card{padding:17px}.passage{font-size:15.5px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<section id="start" class="card">
+<h1>🎯 JLPT N3 読解診断</h1>
+<p class="muted">20問を通して、正答率・回答時間・つまずきやすい読解パターンを診断します。</p>
+<ul>
+<li>問題と選択肢の順番は毎回シャッフルされます。</li>
+<li>時間制限はありませんが、実際にかかった時間を記録します。</li>
+<li>終了後、あなた（学習者）にはマレー語のフィードバックが表示されます。</li>
+</ul>
+<label>Student ID（必須）</label>
+<input id="studentId" type="text" placeholder="例：MYS001">
+<label style="margin-top:14px;display:block">名前・ニックネーム（任意）</label>
+<input id="studentName" type="text" placeholder="例：Aina">
+<p id="startError" class="small" style="color:var(--bad);display:none">Student IDを入力してください。</p>
+<p style="margin-top:18px"><button class="bigbtn" onclick="startTest()">はじめる</button></p>
+</section>
+
+<section id="test" class="hidden">
+<div class="card">
+<div class="progress-row">
+<b id="qCount"></b>
+<span class="timerbox" id="timerbox">00:00</span>
+</div>
+<div class="progress"><div id="bar" class="bar"></div></div>
+<h2 id="question"></h2>
+<div id="passage" class="passage"></div>
+<div id="choices"></div>
+<div id="resultZone"></div>
+</div>
+</section>
+
+<section id="result" class="hidden">
+<div class="card">
+<h1>📊 Keputusan Anda</h1>
+<div class="stats">
+<div class="stat"><span>Skor</span><b id="score"></b></div>
+<div class="stat"><span>Masa</span><b id="totalTime"></b></div>
+<div class="stat"><span>Purata</span><b id="avgTime"></b></div>
+</div>
+<div id="studentFeedback"></div>
+</div>
+
+<div class="card">
+<h2>📚 Semakan Jawapan</h2>
+<p class="muted small">Semak jawapan anda dan lihat sebab jawapan itu betul atau perlu diperbaiki.</p>
+<div id="studentReview"></div>
+</div>
+
+<div class="card">
+<p class="muted small" id="saveStatus">Menyimpan keputusan...</p>
+<div id="fallbackZone"></div>
+<p><button class="bigbtn secondary" onclick="location.reload()">もう一度受ける</button></p>
+</div>
+</section>
+
+</div>
+
+<div id="actionbar" class="actionbar hidden">
+<div class="actionbar-inner">
+<button id="mainBtn" class="bigbtn" disabled></button>
+</div>
+</div>
+
+<script>
+/* ===================== 設定（CONFIG） ===================== */
+// Google Apps ScriptをWebアプリとしてデプロイした後に発行される /exec URL をここに設定してください。
+// 手順は README（セットアップガイド）を参照してください。
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxpGFQOJ4LMIdRhKlCbHDDDwSVrozXAS4AJE2mhzgjzsYKE4tph8NsP_T8fB1aliTgFew/exec"; // 例: "https://script.google.com/macros/s/AKfycbxpGFQOJ4LMIdRhKlCbHDDDwSVrozXAS4AJE2mhzgjzsYKE4tph8NsP_T8fB1aliTgFew/exec"
+
+const REASON_QUESTION_IDS = ["N3-RD-006", "N3-RD-007", "N3-RD-013", "N3-RD-018"];
+const TIME_LONG_MULTIPLIER = 1.5; // 自分の平均時間の何倍を「長い」とみなすか
+const TIP_MIN_FOR_PATTERN = 3;    // この問題数以上で「傾向を確認できる」とみなす
+
+/* ===================== データ ===================== */
+const DATA = {"questions": [{"id": "N3-RD-001", "num": 1, "type": "情報検索", "difficulty": 2, "seconds": 120, "problem_type": "condition", "measured_skill": "Menggabungkan beberapa syarat untuk mengira jawapan（条件の組み合わせ）", "passage": "図書館からのお知らせ\n10月から、図書館の平日の利用時間が変わります。これまでは午後8時まで開いていましたが、10月からは午後7時までになります。ただし、試験の前の2週間は、これまでと同じように午後8時まで利用できます。土曜日は今までと変わらず、午前10時から午後5時までです。本を借りる手続きは、閉館の30分前までにしてください。", "question": "10月に入ってから、試験の3週間前の平日に本を借りたいです。何時までに手続きをしなければなりませんか。", "choices": ["午後7時", "午後6時30分", "午後7時30分", "午後8時"], "correct": "B", "where": "Lihat jadual jam buka: 「10月からは午後7時まで」→ pengecualian 「試験の前の2週間は…午後8時まで」→ syarat pinjaman 「閉館の30分前までに」. Ayat tentang hari Sabtu tidak perlu dibaca.", "core": "Ayat 「ただし、試験の前の2週間は…」 dan 「閉館の30分前まで」. \"3 minggu sebelum peperiksaan\" TIDAK termasuk dalam \"2 minggu sebelum peperiksaan\", jadi waktu tutup ialah 午後7時. Prosedur pinjaman mesti siap 30 minit sebelum tutup, iaitu 午後6時30分. Jawapan: B.\nCara jimat masa: garis bawahi angka sahaja (7時、2週間、30分) dan kira di tepi soalan.", "evidence": "「10月からは午後7時までになります」「試験の前の2週間は、これまでと同じように午後8時まで」「閉館の30分前までにしてください」", "wrong": ["午後7時 ialah waktu tutup, bukan tarikh akhir prosedur. Anda terlupa 「30分前」.", null, "午後7時30分 ialah tarikh akhir jika berada dalam 2 minggu sebelum peperiksaan (tutup 8時 − 30 minit). Tetapi 3 minggu sebelum tidak termasuk.", "午後8時 ialah waktu tutup lama / waktu tutup semasa tempoh peperiksaan, bukan tarikh akhir pinjaman."], "reading_tip": "Untuk soalan 条件, tandakan dahulu syarat dan pengecualian (「ただし」), kemudian semak sama ada pengecualian itu terpakai. Kata kunci: 「ただし」「まで」「30分前」. Tip 20, 29.", "relatedTips": [20, 29]}, {"id": "N3-RD-002", "num": 2, "type": "中文", "difficulty": 1, "seconds": 90, "problem_type": "reference", "measured_skill": "Mencari perkara yang dirujuk oleh kata rujukan（指示語の指示内容の特定）", "passage": "私は先月から、昼休みに会社の近くの公園を歩くようにしています。以前は、昼ごはんを食べたあと、すぐに机に戻って仕事をしていました。しかし、午後になると眠くなって、ミスが増えることが気になっていました。そこで、同僚の山本さんに相談したところ、「少し外を歩いてみたら？」と言われました。試しに続けてみると、午後も頭がすっきりして、仕事がしやすくなりました。今では、雨の日以外は毎日、山本さんと一緒に公園を歩いています。「これ」は、思ったより簡単に続けられる習慣だと感じています。", "question": "本文の「これ」は何を指していますか。", "choices": ["午後になると眠くなって、仕事のミスが増えること", "同僚の山本さんに相談して、外に出るようすすめられること", "昼休みに、会社の近くの公園を歩くこと", "昼ごはんのあとすぐに机に戻って、仕事をすること"], "correct": "C", "where": "Cari 「これ」, kemudian lihat 1–2 ayat SEBELUMNYA: 「今では、雨の日以外は毎日、山本さんと一緒に公園を歩いています。」", "core": "「これ」= 昼休みに公園を歩くこと, iaitu aktiviti yang kini dilakukan setiap hari. Ia sesuai dengan 「簡単に続けられる習慣」.\nJangan baca semula dari awal. Patah balik 1–2 ayat, gantikan 「これ」 dengan setiap pilihan, dan pilih yang ayatnya masih masuk akal.", "evidence": "「今では、雨の日以外は毎日、山本さんと一緒に公園を歩いています。」→「これ」", "wrong": ["Ini ialah MASALAH sebelum ini, bukan 「習慣」 yang senang diteruskan. Ia juga jauh daripada 「これ」.", "Ini ialah cara aktiviti itu bermula. Yang menjadi 習慣 ialah berjalan, bukan berunding.", null, "Ini ialah kebiasaan LAMA (「以前は」). Perkataan 「習慣」 menarik anda ke sini, tetapi sekarang tidak lagi dilakukan."], "reading_tip": "Untuk 指示語 (「これ」「それ」), cari 1–2 ayat sebelumnya dahulu（直前）. Waspada pilihan yang menyebut hal lama（「以前は／今では」）. Tip 18, 14.", "relatedTips": [18, 14]}, {"id": "N3-RD-003", "num": 3, "type": "短文", "difficulty": 2, "seconds": 60, "problem_type": "detail", "measured_skill": "Mengesan pilihan yang separuh betul dengan menyemak semua fakta（複数の情報の照合）", "passage": "件名：十月の町の清掃について\n十月の町の清掃について、お知らせします。今月の清掃は、十日の日曜日に行う予定でしたが、雨が降りそうなので、一週間後の十七日に変更します。集合場所と時間は、いつもと同じで、午前八時に公園の入り口です。ゴミ袋と手袋は町内会で用意しますが、飲み物は各自で持ってきてください。参加できない人は、前の日までに、町内会の鈴木さんに連絡をお願いします。", "question": "このお知らせの内容と合っているものはどれですか。", "choices": ["雨の予報のため、清掃の日は十日から十七日に変わり、集合の時間も遅くなる", "清掃の日は変わったが、集合場所も時間もいつもと同じで、手袋は各自で準備する", "清掃の日は十七日に変わり、参加できない人は前の日までに鈴木さんに連絡する", "雨の場合は清掃が中止になるので、十日の朝に鈴木さんに連絡して確認する"], "correct": "C", "where": "Padankan setiap pilihan dengan fakta dalam teks satu per satu: tarikh 「十七日に変更」, masa/tempat 「いつもと同じ」, sarung tangan 「町内会で用意」, hubungi 「前の日までに…鈴木さん」.", "core": "C betul kerana kedua-dua faktanya ada dalam teks: tarikh berubah kepada 17hb, dan yang tidak dapat hadir mesti menghubungi Suzuki-san sehari sebelum.\nSetiap pilihan mengandungi DUA fakta. Semak kedua-duanya. Satu fakta betul tidak cukup.", "evidence": "「一週間後の十七日に変更します」「集合場所と時間は、いつもと同じ」「ゴミ袋と手袋は町内会で用意」「前の日までに、町内会の鈴木さんに連絡」", "wrong": ["Tarikh berubah (betul), tetapi masa TIDAK berubah（「いつもと同じ…午前八時」）. Separuh betul, separuh salah.", "Tempat dan masa sama (betul), tetapi sarung tangan disediakan oleh 町内会. Yang perlu dibawa sendiri ialah minuman.", null, "Acara BUKAN dibatalkan（中止）, hanya ditunda seminggu. Menghubungi juga dibuat sehari sebelum, bukan pagi 10hb."], "reading_tip": "Jangan pilih pilihan hanya kerana bahagian depannya betul. Semak bahagian belakang juga（半分正解の罠）. Kata kunci: 「変更」「同じ」「各自」「前の日まで」. Tip 11, 20.", "relatedTips": [11, 20]}, {"id": "N3-RD-004", "num": 4, "type": "中文", "difficulty": 2, "seconds": 90, "problem_type": "cause_effect", "measured_skill": "Membezakan sebab dan akibat, serta siapa pemilik sebab itu（原因と結果の整理）", "passage": "私は大学生で、駅前のコンビニでアルバイトをしています。先月、店長から「来月から、木曜日の夜のシフトをほかの人に代わってもらえませんか」と言われました。木曜日の夜は、お客さんが多くて忙しい時間です。来月から新しいアルバイトの人が入るので、忙しい時間に実際の仕事を見ながら、早く仕事を覚えてもらいたいそうです。私は、最近レポートが多くて、アルバイトの時間を減らしたいと思っていたので、すぐに「わかりました」と答えました。ただ、収入が少なくなることは、少し心配です。", "question": "店長は、なぜ「私」に木曜日の夜のシフトを代わってほしいと言いましたか。", "choices": ["木曜日の夜はお客さんが少なくなって、働く人が多すぎるようになったから", "私がレポートで忙しいので、アルバイトの時間を減らしたいと頼んだから", "来月から入る人に、忙しい時間に働いて仕事を早く覚えてもらいたいから", "私が収入を心配して、木曜日ではなくほかの日に働きたいと言ったから"], "correct": "C", "where": "「店長によると」の文と、「新しいアルバイトの人が入る」の後の「〜ので」を見る。誰の理由かを先に確認する。", "core": "Pengurus meminta kerana pekerja baharu perlu belajar kerja pada waktu sibuk. Jawapan: C.\nSoalan 「なぜ」 bertanya sebab SIAPA? Di sini sebab pengurus, bukan sebab \"saya\". Tandakan pemilik sebab sebelum membaca pilihan.", "evidence": "「来月から新しいアルバイトの人が入るので、忙しい時間に実際の仕事を見ながら、早く仕事を覚えてもらいたいそうです」", "wrong": ["Teks kata Khamis malam 「お客さんが多くて忙しい」（ramai）, bukan sedikit.", "「レポートが多くて…」 ialah sebab 'saya' berkata 「わかりました」. Ia bukan sebab pengurus meminta. Sebab dan akibat terbalik.", null, "Bimbang tentang pendapatan ialah PERASAAN SELEPAS syif dikurangkan, bukan sebab pengurus meminta. Sebab dan akibat terbalik."], "reading_tip": "Lukis anak panah 原因→結果 dan tanya siapa yang mempunyai sebab ini. Kata kunci: 「ので」「そうです」「〜ために」. Tip 6, 15.", "relatedTips": [6, 15]}, {"id": "N3-RD-005", "num": 5, "type": "中文", "difficulty": 2, "seconds": 90, "problem_type": "paraphrase", "measured_skill": "Mengenal pasti ungkapan yang sama maksud walaupun perkataan berbeza（言い換えの理解）", "passage": "最近、「運動を始めたいが、続かない」という相談をよく聞きます。運動が続かない人は、最初から「毎日三十分走ろう」のような大きな目標を立ててしまうことが多いようです。しかし、忙しい日や疲れている日は、その目標を守れず、「もうやめよう」と考えてしまいます。そこで、私は「ハードルを下げる」ことをすすめています。たとえば、「家の前まで出て、深呼吸をするだけ」でもかまいません。小さな一歩でも、外に出ることができれば、「今日もできた」と思えます。その気持ちが、次の日の行動につながるのです。", "question": "「ハードルを下げる」とは、ここではどういうことですか。", "choices": ["決めた運動の時間を、少しずつ短くしていくこと", "続けやすいように、やることを簡単で小さなものにすること", "疲れている日は運動をやめて、体をしっかり休ませること", "運動をする場所を家の近くにして、外に出やすくすること"], "correct": "B", "where": "「ハードルを下げる」の直後の「たとえば」の例（深呼吸をするだけ／小さな一歩）と、その前の問題点（大きな目標）を結びつける。未知の語は前後から推測する。", "core": "Penulis menyelesaikan masalah \"sasaran terlalu besar\" dengan membuat tindakan mudah dan kecil supaya senang diteruskan. Jawapan: B.\nJika tidak tahu ungkapan itu, jangan berhenti. Baca contoh selepas 「たとえば」 dan cari pilihan yang sama MAKSUD, bukan sama perkataan.", "evidence": "「最初から…大きな目標を立ててしまう」→「家の前まで出て、深呼吸をするだけ」→「小さな一歩でも…今日もできた」", "wrong": ["Teks tidak menyuruh memendekkan masa secara beransur-ansur. Ia menyuruh bermula dengan hal kecil sejak awal.「三十分」ialah umpan.", null, "「疲れている日」 ada dalam teks sebagai sebab orang berhenti, bukan sebagai cadangan berehat sahaja.", "「家の前まで出て」 hanyalah CONTOH, bukan maksud ungkapan. Contoh bukan inti (Tip 8)."], "reading_tip": "Untuk 言い換え, cari ayat yang maksudnya sama tetapi perkataannya berbeza. Kata kunci: 「たとえば」「言い換え」「小さな」. Tip 8, 9, 14.", "relatedTips": [8, 9, 14]}, {"id": "N3-RD-006", "num": 6, "type": "中文", "difficulty": 3, "seconds": 90, "problem_type": "inference", "measured_skill": "Membuat inferens daripada gabungan dua maklumat dalam teks（複数の情報からの推測）", "passage": "件名：レポートの提出について\n先生\nお忙しいところ、失礼いたします。来週提出するレポートについて、ご相談があります。先週の授業のあと、参考にする本を図書館で探しましたが、必要な本はすべて貸し出し中でした。予約すれば来週の水曜日に借りられるそうですが、提出日は来週の月曜日です。インターネットの資料も探しましたが、先生が授業で話された内容と合うものは見つかりませんでした。提出日を少し延ばしていただくことは、できないでしょうか。", "question": "このメールから、この学生について言えることはどれですか。", "choices": ["図書館の本が借りられる日までに、レポートを書き終えるのは難しいと考えている", "インターネットで資料を探すのが苦手なので、先生に手伝ってほしいと考えている", "授業の内容がよく分からなかったので、もう一度説明してほしいと考えている", "本の予約が間に合わないので、ほかの課題に変えてほしいと考えている"], "correct": "A", "where": "「来週の水曜日に借りられる」と「提出日は来週の月曜日」を比べる。日付の前後関係から推測する。", "core": "Buku hanya boleh dipinjam hari Rabu, tetapi tarikh hantar ialah Isnin. Pelajar meminta lanjutan, maka boleh disimpulkan dia rasa sukar menyiapkan laporan sebelum buku tiba. Jawapan: A.\nUntuk inferens, jangan guna pengalaman sendiri. Pilih jawapan yang boleh dibuktikan dengan dua ayat dalam teks.", "evidence": "「予約すれば来週の水曜日に借りられる」「提出日は来週の月曜日」「提出日を少し延ばしていただくことは、できないでしょうか」", "wrong": [null, "Teks kata dia SUDAH mencari bahan internet. Tiada bukti dia lemah mencari; yang diminta ialah lanjutan tarikh.", "Teks kata bahan internet 「授業で話された内容と合うものは見つからなかった」. Itu bukan 'tidak faham kandungan kelas'.", "Separuh betul (tidak sempat), tetapi yang diminta ialah 「延ばして」 (lanjutkan), bukan tukar tugasan."], "reading_tip": "Inferens bukan tekaan. Pilih hanya yang ada asas dalam teks. Kata kunci: 「予約すれば」「提出日」「延ばして」. Tip 11, 13.", "relatedTips": [11, 13]}, {"id": "N3-RD-007", "num": 7, "type": "長文", "difficulty": 3, "seconds": 150, "problem_type": "main_idea", "measured_skill": "Menangkap isi utama dengan menyusun logik teks（主旨の把握）", "passage": "最近、授業のノートをタブレットで取る学生が増えている。先日、私も友達に勧められて、タブレットで授業を受けてみた。画面に直接書けるので、色も簡単に変えられるし、あとで写真や資料を貼ることもできる。確かに便利だと思った。\nしかし、試験の前になって、私は困ってしまった。ノートはきれいにまとまっているのに、内容があまり頭に残っていなかったのだ。思い出してみると、授業中の私は、先生の話を聞きながら、ただ黒板の文字を写すことに集中していた。\n一方、友達はノートに手で書いている。彼女は「書くときに、大事なところを自分で選ばなければならないから、覚えやすい」と言っていた。手で書くのは時間がかかるが、その分、「何が大切か」を考える時間になるのだろう。\nもちろん、タブレットにも良い点はある。ただ、どんな道具を使っても、大切なのは、ノートをきれいに作ることではなく、内容を自分で考えながら書くことではないだろうか。私もこれからは、タブレットを使うときも、内容を自分の言葉でまとめながら書いてみようと思っている。", "question": "この文章で、筆者が最も言いたいことは何ですか。", "choices": ["タブレットで取るノートは便利だが、授業では手で書くノートのほうが役に立つ", "ノートで大切なのは道具の種類ではなく、内容を自分で考えながら書くことだ", "ノートをきれいにまとめておけば、試験の前に困ることはなくなるはずだ", "大切なところを選んで書くようにすれば、ノートを早く作れるようになる"], "correct": "B", "where": "第2段落の「しかし」以降と、最終段落の「〜ではないだろうか」を読む。各段落に小見出しをつけて全体をたどる。", "core": "Penulis mengatakan 「どんな道具を使っても」, yang penting ialah menulis sambil berfikir tentang kandungan. Jawapan: B.\nUntuk 主旨, baca 「しかし」 dan perenggan terakhir dahulu. Beri setiap perenggan satu tajuk kecil dalam kepala (Tip 21).", "evidence": "「ノートはきれいにまとまっているのに、内容があまり頭に残っていなかった」「どんな道具を使っても、大切なのは、…内容を自分で考えながら書くことではないだろうか」", "wrong": ["Penulis berkata 「どんな道具を使っても」, jadi dia tidak menilai alat mana lebih baik. A melampaui teks.", null, "Bertentangan dengan teks. Nota penulis kemas, tetapi tidak melekat dalam kepala（「きれいにまとまっているのに」）.", "Teks kata menulis tangan 「時間がかかる」（makan masa）. Tiada kenyataan bahawa ia menjadi lebih cepat."], "reading_tip": "Pendapat sebenar penulis biasanya muncul selepas「しかし」dan pada ayat penutup seperti「〜ではないだろうか」. Tip 4, 10, 21, 30.", "relatedTips": [4, 10, 21, 30]}, {"id": "N3-RD-008", "num": 8, "type": "長文", "difficulty": 3, "seconds": 150, "problem_type": "author_intent", "measured_skill": "Memahami tujuan penulis menyebut sesuatu（筆者の意図の把握）", "passage": "私が入社して一年目のころ、会議で自分の意見を言うのがとても苦手だった。間違ったことを言って笑われるのが怖かったからだ。ある日、先輩の佐藤さんが私に言った。「意見が間違っていてもいい。何も言わないほうが、チームにとっては困るよ。」\nその言葉を聞いて、私は少しずつ、会議で発言するようになった。もちろん、最初は的外れな意見も多かったし、資料の数字を間違えて注意されたこともある。しかし、そのたびに、周りの人が「ここはこう考えたらどう？」と教えてくれた。失敗するたびに、私は「一人で考えているだけでは気づけないことがある」と知ることができた。\n今、私は新しい社員の教育を担当している。新人は、私が昔そうだったように、質問をするのをためらうことが多い。だから、私は新人に、自分の失敗談をできるだけ話すようにしている。「私も最初は全然うまくできなかったよ」と言うと、新人の顔が少し明るくなるのがわかる。", "question": "筆者が新人に自分の失敗談を話すのは、どんなことを伝えたいからですか。", "choices": ["失敗した原因を説明して、同じミスを二度としないように教えたいから", "失敗しても問題ないと伝えて、質問や意見を言いやすい気持ちにさせたいから", "昔は仕事がうまくできなかったと話して、先輩としての立場を守りたいから", "会議では正しい意見だけを言えばよいと教えて、佐藤さんのようになってほしいから"], "correct": "B", "where": "「新人は…ためらうことが多い。だから、…失敗談を話す」の因果関係と、直後の「顔が少し明るくなる」という反応を見る。", "core": "Penulis dahulu takut bercakap, dan nasihat Sato-san membantunya. Kini dia menceritakan kegagalannya supaya pekerja baru berasa lega dan berani bertanya. Jawapan: B.\nUntuk 筆者の意図, tanya 'kenapa penulis meletakkan contoh ini di sini?'. Lihat ayat sebelum 「だから」 dan reaksi selepasnya.", "evidence": "「新人は…質問をするのをためらうことが多い。だから、私は新人に、自分の失敗談をできるだけ話すようにしている」「新人の顔が少し明るくなる」", "wrong": ["Penulis tidak menerangkan punca kegagalan atau cara mengelaknya. Teks menekankan perasaan takut untuk bercakap, bukan teknik mengelak ralat.", null, "Teks tidak menyebut menjaga kedudukan sebagai senior. Kegagalan diceritakan untuk mendekati pekerja baru.", "Bertentangan dengan nasihat Sato-san 「意見が間違っていてもいい」. Penulis tidak mahu pekerja baru hanya bercakap perkara yang betul."], "reading_tip": "Tujuan penulis boleh dikesan melalui sebab（「だから」）dan reaksi selepasnya. Kata kunci: 「ためらう」「だから」「顔が明るくなる」. Tip 27, 30.", "relatedTips": [27, 30]}, {"id": "N3-RD-009", "num": 9, "type": "中文", "difficulty": 2, "seconds": 90, "problem_type": "distractor", "measured_skill": "Mengesan pilihan dengan ungkapan terlalu kuat dan fakta yang tidak lengkap（極端な表現・ひっかけの見極め）", "passage": "春の感謝セールのお知らせ\n3月20日（金）から23日（月）までの4日間、「春の感謝セール」を行います。期間中は、店内の春物の服が、すべて20%引きになります。ただし、すでに割引されている商品と、新しく入った夏物の服は、セールの対象外です。また、会員カードをお持ちの方は、レジでカードを見せると、さらに5%安くなります。カードをお持ちでない方も、その場で無料で作ることができます。なお、セール期間中の商品の返品・交換は、レシートを持ってきた場合のみ受け付けます。", "question": "このお知らせの内容と合っているものはどれですか。", "choices": ["「春の感謝セール」の期間中は、店の服がすべて二十パーセント安くなる", "会員カードを持っていない人は、セールの商品を安く買うことができない", "セールの期間中に買った商品は、レシートがなくても返品や交換ができる", "会員カードを持っている人は、レジでカードを見せると、さらに安く買える"], "correct": "D", "where": "「ただし」「また」「なお」の3つの補足文を確認する。「すべて」のような強い言葉が出たら例外を疑う。", "core": "D betul: pemegang kad ahli mendapat diskaun tambahan 5% di kaunter. Jawapan: D.\nApabila melihat perkataan kuat seperti 「すべて」 dalam pilihan, curigai dan cari pengecualian（「ただし」）dalam teks.", "evidence": "「会員カードをお持ちの方は、レジでカードを見せると、さらに5%安くなります」", "wrong": ["「すべて」 hanya untuk 春物の服. Barang yang telah diskaun dan baju musim panas baharu dikecualikan（「ただし…対象外」）.", "Yang tiada kad pun boleh membuatnya di tempat itu secara percuma（「その場で無料で作る」）. Diskaun 20% tidak memerlukan kad.", "Pemulangan dan pertukaran hanya diterima jika membawa resit（「レシートを持ってきた場合のみ」）.", null], "reading_tip": "Pilihan dengan ungkapan kuat（「すべて」「必ず」「〜ない」）selalunya salah kerana teks biasanya ada pengecualian. Kata kunci: 「ただし」「のみ」. Tip 11, 12.", "relatedTips": [11, 12]}, {"id": "N3-RD-010", "num": 10, "type": "中文", "difficulty": 1, "seconds": 90, "problem_type": "detail", "measured_skill": "Memisahkan ada dalam teks daripada jawapan kepada soalan（質問に合う情報の選別）", "passage": "件名：京都旅行のこと\nケイコさん\nこんにちは。京都旅行の予定を考えてみました。一日目は、朝九時に東京駅から新幹線に乗って、昼ごろに京都に着きます。ホテルに荷物を預けたあと、お寺を二つ見て、夜は駅の近くで晩ごはんを食べましょう。二日目は、朝早く起きて、人が少ないうちに有名な竹林に行きたいと思っています。ただ、そのあたりは午後になると観光客が増えて、歩くのも大変だそうです。竹林のあとは、電車で奈良に行って、鹿を見る予定です。三日目は、お昼の新幹線で帰ります。ホテルは駅から歩いて五分の場所で、一泊八千円です。私は先週予約しましたが、まだ予約していなければ、早めにしたほうがいいですよ。", "question": "二日目の予定として、メールに書いてあるものはどれですか。", "choices": ["午後になって観光客が少なくなってから竹林へ行き、そのあと奈良へ行く", "朝早く竹林へ行き、そのあと電車で奈良へ行って鹿を見る", "東京駅から新幹線に乗って京都へ行き、ホテルに荷物を預けてお寺を見る", "朝ホテルを出て奈良の鹿を見てから、お昼ごろに竹林へ行く"], "correct": "B", "where": "質問の「二日目」に印をつけ、「二日目は」から「三日目は」の直前までだけを読む。", "core": "Hari kedua: pagi pergi ke rumpun buluh, kemudian naik tren ke Nara dan melihat rusa. Jawapan: B.\nSoalan menghadkan skop kepada 'hari kedua'. Tulis 一日目/二日目/三日目 di sebelah teks supaya maklumat tidak bercampur.", "evidence": "「二日目は、朝早く起きて、…竹林に行きたい」「竹林のあとは、電車で奈良に行って、鹿を見る予定です」", "wrong": ["Teks berkata petang ramai pelancong, jadi dia mahu pergi pagi（「人が少ないうちに」）. Bertentangan dengan teks.", null, "Semua itu ada dalam teks, tetapi ia rancangan HARI PERTAMA. 'Ada dalam teks' tidak sama dengan 'jawapan soalan'.", "Susunan terbalik. Rumpun buluh dahulu, kemudian Nara（「竹林のあとは」）."], "reading_tip": "Baca kata penentu dalam soalan（「二日目」）dan hadkan bacaan kepada bahagian itu. Kata kunci: 「二日目」「あと」「三日目」. Tip 14, 26.", "relatedTips": [14, 26]}, {"id": "N3-RD-011", "num": 11, "type": "情報検索", "difficulty": 2, "seconds": 120, "problem_type": "condition", "measured_skill": "条件と例外（割引の対象外を見落とさない）", "passage": "市民体育館　卓球室のご利用案内\n◆利用時間：午前9時〜午後9時（月曜日は休み）\n◆料金（部屋の使用料です。人数に関係なく、1時間ごとの料金です）\n　平日　午前・午後：300円　夜（午後5時から）：500円\n　土日祝日　一日中：600円\n◆市内に住んでいる人は、料金が半額になります。ただし、土日祝日は割引の対象外です。\n◆小学生以下の子どもは、大人と一緒に利用する場合、無料です。\n◆予約は、利用する日の一週間前から、電話または受付でできます。", "question": "市内に住む大学生の木村さんは、今度の水曜日（祝日ではありません）の午後6時から2時間、友達と卓球室を使います。木村さんが払う料金はいくらですか。", "choices": ["300円", "500円", "1,000円", "1,200円"], "correct": "B", "where": "料金表の「平日」→「夜（午後5時から）」→「市内に住んでいる人は…半額」→例外「ただし、土日祝日は…対象外」の順に見る。子ども無料と予約の項目は読まなくてよい。", "core": "Rabu ialah hari biasa. 午後6時〜8時 termasuk 「夜（午後5時から）」= 500円 sejam, jadi 2 jam = 1,000円. Kimura tinggal dalam bandar dan hari biasa tidak dikecualikan, maka diskaun separuh: 500円. Jawapan: B.\nJimat masa: abaikan maklumat kanak-kanak dan tempahan. Kira dalam tiga langkah: kadar → jumlah jam → diskaun.", "evidence": "「平日…夜（午後5時から）：500円」「市内に住んでいる人は、料金が半額」「ただし、土日祝日は割引の対象外」", "wrong": ["Menggunakan kadar siang（300円）. Tetapi 午後6時 masuk kadar malam.", null, "1,000円 ialah harga SEBELUM diskaun. Anda terlupa diskaun 50% untuk penduduk bandar.", "600円×2 jam ialah kadar hujung minggu/cuti tanpa diskaun. Rabu bukan hujung minggu."], "reading_tip": "Untuk soalan jadual, cari pengecualian（「ただし」「対象外」）dahulu, kemudian kira langkah demi langkah. Tip 20, 29.", "relatedTips": [20, 29]}, {"id": "N3-RD-012", "num": 12, "type": "短文", "difficulty": 2, "seconds": 60, "problem_type": "detail", "measured_skill": "本文にある情報と質問への答えの区別（旧情報と新情報）", "passage": "【お知らせ】ごみを出す日の変更について\n来月から、ごみを出す日が変わります。燃えるごみは、月曜日と木曜日から、火曜日と金曜日になります。燃えないごみは、これまでどおり第2水曜日です。ただし、ペットボトルは、出す日が毎週金曜日から、第1・第3金曜日だけに変わります。ごみは、出す日の朝8時までに、1階のごみ置き場に出してください。前の日の夜に出すことは、できません。", "question": "来月からのごみの出し方について、正しいものはどれですか。", "choices": ["燃えないごみは、これまでどおり第2水曜日の朝8時までに出す", "燃えるごみは、月曜日と木曜日の朝8時までに出す", "ペットボトルは、毎週金曜日の朝8時までに出す", "燃えるごみは、火曜日と金曜日の前の日の夜から出してもよい"], "correct": "A", "where": "選択肢に出てくるごみの種類ごとに、その種類を説明している文だけを読む。「AからBに」の形はAが旧情報、Bが新情報。「これまでどおり」は変わらない印。", "core": "Sampah tak boleh bakar: 「これまでどおり第2水曜日」, dan mesti dikeluarkan sebelum 8 pagi pada hari itu. Jawapan: A.\nPerhatikan corak 「AからBに」: A ialah jadual LAMA, B ialah jadual BARU. Pilihan B dan C menggunakan jadual lama.", "evidence": "「燃えないごみは、これまでどおり第2水曜日です」「ごみは、出す日の朝8時までに」", "wrong": [null, "Isnin dan Khamis ialah jadual LAMA sampah boleh bakar. Kini Selasa dan Jumaat.", "Setiap Jumaat ialah jadual LAMA PET. Kini hanya Jumaat pertama dan ketiga.", "Dilarang mengeluarkan pada malam sebelumnya（「前の日の夜に出すことは、できません」）."], "reading_tip": "Bezakan maklumat lama dan baru dalam pengumuman. Kata kunci: 「〜から…に」「これまでどおり」「ただし」. Tip 20, 24.", "relatedTips": [20, 24]}, {"id": "N3-RD-013", "num": 13, "type": "中文", "difficulty": 2, "seconds": 90, "problem_type": "paraphrase", "measured_skill": "言い換え", "passage": "件名：来月の勤務時間について\n営業部のみなさん\n来月から、朝の勤務開始時間を、午前九時から午前十時に変更することになりました。これは、電車が混む時間をさけたいという社員の声が多かったためです。先月、一部の部署で試してみたところ、遅刻が減ったという結果も出ています。ただし、お客様との打ち合わせや会議が午前九時台に入っている場合は、これまでどおり出社してください。また、家の事情などで、どうしても時間を変えられない方は、遠慮なく私に相談してください。個別に対応できるように、できるだけ努力します。なお、退社の時間は、勤務開始が遅くなる分、午後六時から午後七時になります。\n部長　田村", "question": "「個別に対応できるように、できるだけ努力します」とは、どういうことですか。", "choices": ["全員に同じルールを守らせるために、部長ができるだけ努力するということ", "家の事情がある人は、自由に勤務時間を決めてよいということ", "相談した人だけ、九時台の会議に出なくてよいようにするということ", "一人一人の事情を聞いて、その人に合った対応をできるだけ考えるということ"], "correct": "D", "where": "下線の文と、その直前の「家の事情などで…遠慮なく私に相談してください」を読む。「個別に」は一人一人、「努力します」は約束ではなく試みを表す。", "core": "「個別に」= satu per satu, 「対応」= menguruskan. Maksudnya: dengar keadaan setiap orang dan fikirkan cara yang sesuai, sebaik mungkin. Jawapan: D.\nGantikan ungkapan itu dengan setiap pilihan dan semak sama ada ayat sebelumnya masih bersambung. Ingat: 「努力します」= cuba, bukan janji.", "evidence": "「家の事情などで、どうしても時間を変えられない方は、遠慮なく私に相談してください。個別に対応できるように、できるだけ努力します。」", "wrong": ["Bertentangan. Ayat itu tentang melayan keadaan individu, bukan memaksa peraturan yang sama.", "「自由に決めてよい」 melampaui teks. Yang ada hanya 「相談してください」dan「努力します」（cuba）, bukan kebebasan.", "Mesyuarat pukul 9 ada peraturan berasingan（「これまでどおり出社してください」）. Tiada janji orang yang berunding boleh tidak hadir.", null], "reading_tip": "Jika ada perkataan sukar（「個別に」）, gunakan ayat sebelumnya sebagai petunjuk (Tip 9). Bandingkan satu perkataan yang menentukan (Tip 25). Tip 9, 25.", "relatedTips": [9, 25]}, {"id": "N3-RD-014", "num": 14, "type": "中文", "difficulty": 3, "seconds": 90, "problem_type": "reference", "measured_skill": "指示語の指示内容の特定（キーワード検索）", "passage": "留学生のみなさんへ\n来週の金曜日に予定していた遠足について、お知らせします。当日の天気予報が雨なので、行き先を動物園から水族館に変更します。動物園の入場券はすでに買ってありますが、それは学校が別の日に使う予定です。水族館は、動物園より駅から近く、雨でも楽しめます。ただし、水族館は大きなグループで入ると、料金が一人二百円高くなります。学校は、その分を負担しますので、みなさんは追加でお金を払う必要はありません。昼ごはんのお弁当は、水族館の休憩室で食べます。当日は、動きやすい服で来てください。集合の時間と場所は変わりません。変更について不安がある人は、担任の先生に相談してください。", "question": "「その分」とは、何のことですか。", "choices": ["動物園の入場券を、先に買っておいた代金", "行き先を変えたために、使えなくなる動物園の入場券の代金", "水族館に大きなグループで入るとき、一人につき高くなる二百円", "水族館の入場料金の全部"], "correct": "C", "where": "「その分」の直前の文「大きなグループで入ると、料金が一人二百円高くなります」だけを見る。動物園の入場券の文は指示の対象ではない。", "core": "Ayat sebelumnya: masuk secara berkumpulan → harga naik 200 yen seorang. 「その分」= bahagian yang naik itu. Sebab itu 「追加でお金を払う必要はありません」. Jawapan: C.\n「その分」 merujuk kepada jumlah/bahagian tertentu, bukan keseluruhan. Cari kata 'bertambah'（「高くなる」）dalam ayat sebelumnya.", "evidence": "「水族館は大きなグループで入ると、料金が一人二百円高くなります。学校は、その分を負担しますので…」", "wrong": ["Tiket zoo memang sudah dibeli, tetapi ia tiada kaitan dengan「負担」. Ia berada di ayat yang lebih jauh.", "Teks berkata tiket zoo akan digunakan pada hari lain（「別の日に使う予定」）, jadi ia tidak menjadi sia-sia.", null, "Yang ditanggung ialah bahagian yang NAIK sahaja. Yuran asal tidak disebut, dan「追加で」bermaksud tambahan."], "reading_tip": "Untuk 指示語, semak ayat sebelum dahulu（直前1〜2文）, kemudian gantikan dengan pilihan. Tip 14, 18.", "relatedTips": [14, 18]}, {"id": "N3-RD-015", "num": 15, "type": "中文", "difficulty": 3, "seconds": 90, "problem_type": "cause_effect", "measured_skill": "原因と結果（複数箇所の情報を結びつける）", "passage": "冷蔵庫に食べ物をたくさん入れると、冷たい空気が通りにくくなるため、冷蔵庫の中が冷えにくくなります。そのため、冷やそうとして電気をたくさん使い、電気代が高くなります。反対に、何も入っていない状態も、電気代の面ではよくありません。ドアを開けたときに冷たい空気が逃げやすく、冷やし直すために電気を使うからです。ちょうどよいのは、冷蔵庫の中の七割くらいに食べ物を入れた状態だと言われています。食べ物を入れるときは、まず中の様子を見て、量を考えることが大切です。ただし、冷凍庫は反対です。冷凍庫は、すきまなく入れたほうが、冷たいもの同士が冷やし合うので、電気代が安くなります。", "question": "冷蔵庫に食べ物を入れすぎる場合と、何も入れない場合で、電気代が高くなる理由はどう違いますか。", "choices": ["入れすぎるとドアが開けにくくなり、入れないと冷たい空気が通りにくくなるから", "入れすぎると冷たい空気が通りにくくなり、入れないとドアを開けたとき冷たい空気が逃げやすいから", "入れすぎると冷たい空気が逃げやすくなり、入れないと冷たい空気が通りにくくなるから", "入れすぎると冷凍庫が冷えにくくなり、入れないと食べ物どうしが冷やし合えないから"], "correct": "B", "where": "2か所を結びつける。①「たくさん入れると…通りにくくなる」（入れすぎ）②「何も入っていない…ドアを開けたときに…逃げやすく」（空っぽ）。冷凍庫の文は別の話なので使わない。", "core": "Penuh → udara sejuk sukar mengalir → tidak sejuk → guna banyak elektrik. Kosong → udara sejuk mudah lari bila pintu dibuka → perlu menyejukkan semula → guna elektrik. Jawapan: B.\nSoalan meminta PERBEZAAN dua keadaan. Tulis 'penuh: ___ / kosong: ___' dari teks sebelum melihat pilihan.", "evidence": "「冷たい空気が通りにくくなるため、冷蔵庫の中が冷えにくくなります」「ドアを開けたときに冷たい空気が逃げやすく、冷やし直すために電気を使うからです」", "wrong": ["「ドアが開けにくい」 tiada dalam teks. Sebab untuk keadaan kosong juga salah.", null, "Sebab kedua-dua keadaan bertukar tempat: 「逃げやすい」ialah sebab kosong, 「通りにくい」ialah sebab penuh.", "Ini memasukkan maklumat PETI BEKU. 「冷やし合う」ialah kelebihan peti beku, bukan sebab kos elektrik peti sejuk."], "reading_tip": "Susun A（penuh）= …, B（空）= … di kepala (Tip 17) dan tuliskan anak panah sebab→akibat (Tip 6). Kata kunci: 「そのため」「反対に」「ただし」. Tip 6, 17.", "relatedTips": [6, 17]}, {"id": "N3-RD-016", "num": 16, "type": "長文", "difficulty": 4, "seconds": 165, "problem_type": "main_idea", "measured_skill": "筆者の主張（複数段落の情報の統合・選択肢の比較）", "passage": "最近、スーパーで自分で会計をする「セルフレジ」を見かけることが増えた。レジに並ぶ時間が短くなったと喜ぶ人がいる一方で、使い方がわからず、かえって時間がかかってしまう人もいる。\nセルフレジが増えた大きな理由は、店で働く人が足りないことだ。多くのスーパーでは、レジの仕事をする人を集めるのが難しくなっている。たとえば、ある大きなスーパーでは、二十台のレジのうち十台がセルフレジになっている。セルフレジなら、一人の店員が何台かのレジを見ることができるので、少ない人数でも店を開けられる。\nしかし、問題もある。ある店の調査によると、セルフレジが増えたあと、商品を袋に入れたまま代金を払わない「うっかり」が増えたという。また、お年寄りのお客さんからは、「機械が苦手で、前のように店員さんと話しながら買いたい」という声も多く聞かれる。そのため、その店では、店員が会計をするレジも残している。\n機械が便利かどうかは、使う人によって違う。大切なのは、店が「人が会計するレジ」か「セルフレジ」のどちらかに決めてしまうことではなく、お客さんが自分に合った方法を選べるようにしておくことではないだろうか。", "question": "この文章の内容を最もよくまとめているものはどれですか。", "choices": ["お客さんが並ぶ時間を短くしたいと望んだためにセルフレジが増え、少ない人数でも店を開けられる。しかし、うっかり払わない人が増え、機械が苦手なお年寄りもいるので、お客さんが自分に合う方法を選べるようにしておくことが大切だ", "働く人が足りないためにセルフレジが増え、少ない人数でも店を開けられる。しかし、うっかり払わない人はあまり増えておらず、機械が苦手なお年寄りもいるので、お客さんが自分に合う方法を選べるようにしておくことが大切だ", "働く人が足りないためにセルフレジが増え、どのお客さんもレジに並ぶ時間が短くなる。しかし、うっかり払わない人が増え、機械が苦手なお年寄りもいるので、お客さんが自分に合う方法を選べるようにしておくことが大切だ", "働く人が足りないためにセルフレジが増え、少ない人数でも店を開けられる。しかし、うっかり払わない人が増え、機械が苦手なお年寄りもいるので、お客さんが自分に合う方法を選べるようにしておくことが大切だ"], "correct": "D", "where": "4段落すべてを使う。P1: 良い点も困る人もいる。P2: 増えた理由。P3: 問題点とお年寄りの声。P4: 筆者の結論。4つの選択肢は結論が同じなので、最終段落だけでは選べない。", "core": "Setiap pilihan ialah ringkasan seluruh teks dan hampir sama. Hanya satu perincian berbeza setiap kali.\nD betul kerana semua bahagian sepadan: sebab（働く人が足りないこと）, kelebihan（少ない人数でも店を開けられる）, masalah（うっかりが増えた）, suara warga emas（機械が苦手）, dan pendapat penulis（選べるようにしておく）.\nJangan bermula dari perenggan terakhir sahaja, kerana kesimpulan yang sama ada dalam SEMUA pilihan. Tandakan betul/salah untuk setiap bahagian pilihan.", "evidence": "「セルフレジが増えた大きな理由は、店で働く人が足りないことだ」「少ない人数でも店を開けられる」「『うっかり』が増えたという」「機械が苦手で…」「お客さんが自分に合った方法を選べるようにしておく」", "wrong": ["Sebab peningkatan ialah 「店で働く人が足りないこと」（perenggan2）. Kehendak pelanggan（perenggan1）ialah kelebihan, bukan sebab. Sebab dan kelebihan bercampur.", "Perenggan3 berkata 「うっかり」が増えた（bertambah）. 「あまり増えておらず」bertentangan dengan teks.", "Perenggan1 berkata ada orang yang masanya menjadi lebih lama（「かえって時間がかかってしまう人もいる」）. 「どのお客さんも」ialah generalisasi berlebihan.", null], "reading_tip": "Apabila semua pilihan hampir sama, bandingkan bahagian demi bahagian（sebab／kelebihan／masalah／suara pelanggan／penulis）dan cari satu perkataan yang berbeza (Tip 25). Curigai「どのお客さんも」「あまり」(Tip 12). Tip 12, 21, 25.", "relatedTips": [12, 21, 25]}, {"id": "N3-RD-017", "num": 17, "type": "長文", "difficulty": 4, "seconds": 165, "problem_type": "author_intent", "measured_skill": "登場人物の意見と筆者の意見の区別（複数段落の統合）", "passage": "私の町の駅前に、大きなショッピングモールを建てる計画がある。町の人の意見は分かれていて、先日、町の集まりでも話し合いが行われた。\n会社員の田中さんは、この計画に賛成だ。駅前の商店街の店は、夜七時ごろには閉まってしまう。仕事が終わってから買い物をしたい人にとって、夜遅くまで開いているモールは、とても便利だと言う。\n一方、商店街で長く暮らしている森さんは反対だ。森さんによると、商店街は買い物をするだけの場所ではない。店の人が子どもたちに声をかけたり、一人で暮らすお年寄りの様子を気にかけたりしてきた。モールができて店が閉まれば、そうした関係もなくなってしまうのではないかと心配している。\n私は、話を聞くまでは田中さんの意見に近かった。便利なほうがいいと思っていたからだ。ところが、商店街の八百屋のおじさんに話を聞くと、「うちで野菜を買ってくれなくてもいいんだよ。通るときに、あいさつしてくれるだけで十分だ」と笑って言われた。その言葉を聞いて、私は商店街の役割を、買い物の場所としてしか見ていなかったことに気づいた。今の私は、モールに賛成か反対かを急いで決めるより、商店街の良さをどう残せるかを町のみんなで話し合うことが先だと思っている。", "question": "この文章の内容を最もよくまとめているものはどれですか。", "choices": ["田中さんは、商店街の店の数が少なくて買い物に不便だと考えて賛成しており、森さんは商店街が人とのつながりの場でもあると考えて反対している。筆者は八百屋の言葉を聞いて、商店街の役割を買い物の場所としてしか見ていなかったことに気づき、賛成か反対かを急いで決めるより、商店街の良さをどう残せるか話し合うことが大切だと考えている。", "田中さんは、商店街の店が夜七時ごろに閉まってしまうことが不便だと考えて賛成しており、森さんはモールができると駅前の土地の値段が下がることを心配して反対している。筆者は八百屋の言葉を聞いて、商店街の役割を買い物の場所としてしか見ていなかったことに気づき、賛成か反対かを急いで決めるより、商店街の良さをどう残せるか話し合うことが大切だと考えている。", "田中さんは、商店街の店が夜七時ごろに閉まってしまうことが不便だと考えて賛成しており、森さんは商店街が人とのつながりの場でもあると考えて反対している。筆者は森さんの話を聞いて、商店街の役割を買い物の場所としてしか見ていなかったことに気づき、賛成か反対かを急いで決めるより、商店街の良さをどう残せるか話し合うことが大切だと考えている。", "田中さんは、商店街の店が夜七時ごろに閉まってしまうことが不便だと考えて賛成しており、森さんは商店街が人とのつながりの場でもあると考えて反対している。筆者は八百屋の言葉を聞いて、商店街の役割を買い物の場所としてしか見ていなかったことに気づき、賛成か反対かを急いで決めるより、商店街の良さをどう残せるか話し合うことが大切だと考えている。"], "correct": "D", "where": "3段落を比べる。P2田中さんの理由（夜七時に閉まる）、P3森さんの理由（人とのつながり）、P4筆者の気づきのきっかけ（八百屋のおじさん）。誰が言ったかを名前で確認する。", "core": "Ketiga-tiga perenggan（田中・森・筆者）diringkaskan hampir sama dalam setiap pilihan. Hanya SATU perincian berbeza setiap kali.\nD betul: sebab Tanaka（waktu tutup kedai）, sebab Mori（hubungan manusia）, dan pencetus penulis（kata-kata 八百屋のおじさん）semuanya sepadan dengan teks.\nC paling mengelirukan kerana isi kesedaran penulis betul — hanya orang yang bercakap dengannya yang ditukar. Semak nama orangnya, bukan sekadar isi ayat.", "evidence": "「駅前の商店街の店は、夜七時ごろには閉まってしまう」「モールができて店が閉まれば、そうした関係もなくなってしまうのではないか」「商店街の八百屋のおじさんに話を聞くと…その言葉を聞いて」", "wrong": ["Teks tidak menyebut bilangan kedai. Sebab Tanaka ialah waktu tutup（七時）, bukan kekurangan kedai.", "Teks tidak menyebut harga tanah. Kebimbangan Mori ialah hilangnya hubungan manusia, bukan ekonomi.", "Isi kesedaran betul, tetapi orangnya salah. Penulis mendengar daripada 八百屋のおじさん, bukan Mori-san.", null], "reading_tip": "Apabila pilihan hampir sama, semak setiap orang dan sebab masing-masing berasingan — bukan hanya isinya, tetapi juga siapa yang mengatakannya. Kata kunci: 「夜七時」「人とのつながり」「八百屋のおじさん」. Tip 16, 25.", "relatedTips": [16, 25]}, {"id": "N3-RD-018", "num": 18, "type": "情報検索", "difficulty": 4, "seconds": 165, "problem_type": "condition", "measured_skill": "条件と例外（複数箇所の情報を結びつける）", "passage": "【市民センター　料理教室のご案内】\n◆日時：毎月第2・第4土曜日　午前10時〜12時\n◆場所：市民センター2階　調理室\n◆参加費：1回1,500円（材料費を含む）。初めて参加する方は、1回目だけ1,000円です。\n◆申し込み：参加する日の7日前までに、電話またはメールでお申し込みください。\n◆日にちの変更：参加する日の3日前までに連絡すれば、参加費なしで、ほかの日に変更できます。それ以降は変更できず、キャンセルとして扱います。\n◆キャンセル：参加する日の3日前までは無料です。2日前から前日までは参加費の半分、当日は全額をお支払いください。ただし、インフルエンザなどの病気で参加できない場合は、医師の診断書（＊）があれば、いつでも無料でキャンセルできます。\n◆持ち物：エプロンとタオルは、各自でご用意ください。\n（＊）診断書：医者が病気について書いた紙\n\n件名：料理教室について\n市民センター　ご担当者様\n十月の第2土曜日の料理教室に申し込んでいる山口です。実は、その日に仕事の都合で参加できなくなりました。今日は、その日の二日前です。私は、これまでに三回参加しています。参加日を来月に変えたいのですが、可能でしょうか。また、参加しない場合、参加費はどうなりますか。", "question": "山口さんのメールに対する答えとして、案内に合っているものはどれですか。", "choices": ["キャンセルすると750円を払う。参加日を来月に変えることも、できる。", "キャンセルすると1,500円を払う。参加日を来月に変えることは、できない。", "キャンセルすると750円を払う。参加日を来月に変えることは、できない。", "キャンセルは無料でできる。参加日を来月に変えることは、できない。"], "correct": "C", "where": "メールの「二日前」「仕事の都合」「三回参加」を、案内の「日にちの変更（3日前まで）」と「キャンセル（2日前〜前日は半額）」に当てはめる。「診断書」と「初めての方1,000円」は山口さんに当てはまらない。", "core": "Perubahan tarikh hanya sehingga 3 hari sebelum. Dua hari sebelum sudah lewat, jadi tidak boleh (dianggap batal). Pembatalan 2 hari sebelum → separuh yuran = 750円. Pengecualian 診断書 hanya untuk penyakit, dan harga 1,000円 hanya untuk kali pertama, jadi kedua-duanya tidak terpakai. Jawapan: C.\nBuat jadual kecil 'fakta e-mel → peraturan'. Semak pengecualian satu per satu. Jika tiada yang terpakai, gunakan peraturan asas.", "evidence": "「参加する日の3日前までに連絡すれば…それ以降は変更できず、キャンセルとして扱います」「2日前から前日までは参加費の半分」「今日は、その日の二日前です」", "wrong": ["Yuran betul（750円）, tetapi perubahan tarikh SUDAH tidak boleh（batas 3日前）. Separuh betul.", "1,500円 ialah bayaran untuk hari itu sendiri（「当日は全額」）. Ini dua hari sebelum, bukan hari itu.", null, "Percuma hanya sehingga 3日前, atau dengan 診断書 untuk penyakit. Sebab 'kerja' tidak termasuk."], "reading_tip": "Untuk soalan syarat, padankan fakta orang itu dengan setiap peraturan, kemudian semak pengecualian satu per satu. Kata kunci: 「3日前まで」「それ以降」「ただし」. Tip 11, 20, 29.", "relatedTips": [11, 20, 29]}, {"id": "N3-RD-019", "num": 19, "type": "長文", "difficulty": 4, "seconds": 165, "problem_type": "inference", "measured_skill": "複数箇所の情報を結びつける（推測）", "passage": "私の職場では、先月から、会議の資料を紙で配るのをやめて、パソコンの画面で見ることになった。会議は週に二回あり、そのたびに人数分の資料をコピーして配っていたが、その作業に毎回かなりの時間がかかっていたからだ。\n最初のうちは、私も含めて多くの人が不満だった。画面では資料を見ながらメモを書きにくいし、前のページに戻るのも面倒で、字が小さくて読みにくいという声もあったからだ。特に、部長の川口さんは、「これでは会議の内容が頭に入らない」と言って、こっそり自分で資料を印刷して持ってくるようになった。\nところが、二週間ほどたったころ、会議の様子が少し変わった。画面を見ながら、みんなが同時に資料に書き込めるようになり、会議の途中でも、間違いがすぐに直せるようになったのだ。あるとき、私が見つけた資料の数字の間違いを、川口部長がその場で画面に書き込んで直した。部長は「これは便利だね」と小さな声で言った。\n先週の会議では、川口部長は印刷した資料を持ってこなかった。かわりに、ノートとペンだけを机の上に置いて、みんなと同じように画面を見ていた。", "question": "川口部長の最近の様子から、どのようなことが考えられますか。", "choices": ["部長は、紙の資料を作るのに時間がかかることに気づき、進んで印刷をやめた", "部長は、今も画面の資料には反対だが、ほかの人に合わせて、しかたなく画面を見ている", "部長は、数字の間違いを直してもらったことに感謝して、画面の資料を見るようになった", "部長は、画面の資料で会議が進めやすくなることを知り、資料を印刷しなくなった"], "correct": "D", "where": "川口部長の3つの場面を時間順に結びつける。P2（反対して、こっそり印刷）→P3（「これは便利だね」）→P4（印刷しない）。P1の「コピーに時間がかかる」は会社の理由で、部長の理由ではない。", "core": "Dahulu: menentang dan mencetak sendiri. Kemudian: melihat skrin memudahkan pembetulan bersama, dan berkata 「これは便利だね」. Akhirnya: tidak lagi membawa cetakan. Maka beliau merasakan kemudahan skrin dan berhenti mencetak. Jawapan: D.\nLetakkan tiga bahagian dalam satu garis masa: menentang → 「便利だね」 → tidak mencetak. Pilih jawapan yang menerangkan perubahan itu tanpa menambah fakta baru.", "evidence": "「これでは会議の内容が頭に入らない」と言って、こっそり自分で資料を印刷して持ってくるようになった」「『これは便利だね』と小さな声で言った」「先週の会議では、川口部長は印刷した資料を持ってこなかった」", "wrong": ["Masa menyalin ialah sebab SYARIKAT menukar peraturan（perenggan1）, bukan sebab Kawaguchi. Tiada bukti beliau memikirkannya.", "Bertentangan dengan 「これは便利だね」. 「しかたなく」ialah fakta baru yang tiada dalam teks.", "Peranan terbalik. Penulis yang menemui kesilapan, Kawaguchi yang membetulkannya. Tiada ucapan terima kasih dalam teks.", null], "reading_tip": "Untuk inferens, letakkan perubahan seseorang dalam garis masa dan cari perkara yang mengubahnya. Kata kunci: 「ところが」「こっそり」「これは便利だね」「かわりに」. Tip 4, 13.", "relatedTips": [4, 13]}, {"id": "N3-RD-020", "num": 20, "type": "長文", "difficulty": 3, "seconds": 150, "problem_type": "distractor", "measured_skill": "選択肢の比較（一部を大きく一般化した選択肢の見極め）", "passage": "災害に備えて、非常食を買っておくことは大切だと言われる。しかし、多くの家庭では、買ったまま棚の奥にしまい、賞味期限（＊）が切れてしまう。ある調査では、非常食を用意している家庭のうち、約三分の一が「期限がいつなのか知らない」と答えた。\nそこで最近注目されているのが、「ローリングストック」という方法だ。これは、ふだん食べているものを少し多めに買っておき、食べたら買い足す、という方法である。たとえば、カップ麺やレトルトカレー、缶詰、水などが向いている。特別な非常食を買う必要はなく、古いものから順に食べるので、期限切れを防ぎやすい。\nただし、この方法にも注意が必要だ。買い足すのを忘れると、いざというときに食べ物が足りなくなる。家族が多い家庭では、食べる量が多いため、ストックがすぐになくなることもある。そのため、「食べたら、その日のうちにメモをする」など、自分の家に合ったルールを決めておくとよい。\n災害はいつ起きるかわからない。大切なのは、立派な備えをすることではなく、続けられる方法で、少しずつ備えることだと私は思う。\n（＊）賞味期限：おいしく食べられる期限", "question": "この文章の内容と合っているものはどれですか。", "choices": ["ローリングストックは期限切れを防ぎやすいが、買い足しを忘れると食べ物が足りなくなることがある", "ローリングストックでは、期限切れを防ぐために、特別な非常食を少し多めに買っておく", "非常食を用意している家庭の多くは、賞味期限がいつなのかを知らない", "家族が多い家庭は、ストックがすぐになくなるので、この方法には向いていない"], "correct": "A", "where": "第2段落（期限切れを防ぎやすい）と第3段落（買い足しを忘れると足りなくなる）の両方を結びつける。「約三分の一」「〜こともある」という程度の言葉に注目する。", "core": "Semak setiap pilihan dengan perenggan yang berkaitan. Pilihan A meliputi perenggan2（期限切れを防ぎやすい）dan perenggan3（買い足しを忘れると足りなくなる）. Kedua-dua bahagian A ada dalam teks. Jawapan: A.\nPerhatikan perkataan yang menukar 'sebahagian' kepada 'kebanyakan/semua': 「約三分の一」→「多くの」, 「こともある」→「向いていない」. Bandingkan satu perkataan itu dengan teks (Tip 25).", "evidence": "「特別な非常食を買う必要はなく、古いものから順に食べるので、期限切れを防ぎやすい」「買い足すのを忘れると、いざというときに食べ物が足りなくなる」", "wrong": [null, "Bertentangan dengan 「特別な非常食を買う必要はなく」. Teks menyuruh menggunakan makanan biasa.", "Teks berkata 「約三分の一」（kira-kira sepertiga）, bukan「多く」. Sepertiga tidak sama dengan 'kebanyakan'.", "Teks hanya berkata 「ストックがすぐになくなることもある」（kadang-kadang）dan mencadangkan peraturan sendiri. Ia tidak berkata 'tidak sesuai'."], "reading_tip": "Pilihan yang mengubah kadar（「約三分の一」→「多く」）atau kemungkinan（「こともある」→「向いていない」）selalunya perangkap. Kata kunci: 「約三分の一」「こともある」「ただし」. Tip 11, 25.", "relatedTips": [11, 25]}], "category_label": {"main_idea": "主旨 (Isi utama)", "detail": "詳細 (Butiran)", "paraphrase": "言い換え (Olahan semula)", "inference": "推測 (Kesimpulan)", "cause_effect": "原因と結果 (Sebab-akibat)", "author_intent": "筆者の意図 (Tujuan penulis)", "reference": "指示語 (Kata rujukan)", "condition": "条件 (Syarat)", "distractor": "ひっかけ選択肢 (Pilihan mengelirukan)"}, "category_advice": {"main_idea": "Fokus kepada ayat pembuka dan penutup setiap perenggan, dan cari pendapat sebenar penulis selepas kata seperti「しかし」atau ayat penutup seperti「〜ではないだろうか」.", "detail": "Padankan setiap bahagian pilihan dengan fakta dalam teks satu per satu. Jangan pilih hanya kerana sebahagian pilihan itu betul.", "paraphrase": "Cari ayat yang maksudnya sama tetapi menggunakan perkataan yang berbeza. Perkataan yang sama tidak semestinya maksud yang sama.", "inference": "Buat kesimpulan hanya berdasarkan maklumat yang benar-benar ada dalam teks, bukan pengetahuan am atau tekaan peribadi.", "cause_effect": "Pastikan arah sebab→akibat betul, dan kenal pasti dengan jelas siapa atau apa yang memiliki sebab tersebut.", "author_intent": "Bezakan pendapat penulis sendiri daripada pendapat watak lain dalam teks. Semak siapa yang bercakap, bukan hanya isi ayat.", "reference": "Semak 1–2 ayat SEBELUM kata ganti seperti「これ」「それ」untuk mengetahui dengan tepat apa yang dirujuk.", "condition": "Cari syarat dan pengecualian（「ただし」）dalam teks dahulu, sebelum mengira atau memadankan jawapan.", "distractor": "Berhati-hati dengan ungkapan yang terlalu kuat（「すべて」「必ず」）dan generalisasi berlebihan dalam pilihan jawapan."}, "tip_titles": {"1": "段落の最初と最後に注目する", "2": "問題文（問い）を先に読む", "3": "キーワード（繰り返し出る言葉）をマークする", "4": "接続詞の後の展開を予測する", "5": "「つまり」「要するに」を見逃さない", "6": "「そのため」「したがって」で理由と結果をつなぐ", "7": "「一方」「それに対して」で対比構造を整理する", "8": "例示と主張を区別する", "9": "未知の単語があっても止まらない", "10": "筆者の感情・意見を表す末尾を押さえる", "11": "部分的に正しい選択肢に飛びつかない", "12": "極端な表現に警戒する", "13": "自分の常識・先入観で答えない", "14": "本文と同じ単語を使った引っ掛けを疑う", "15": "因果関係の逆転を検知する", "16": "主語と述語のねじれをチェックする", "17": "対比されている2つの要素を整理する", "18": "指示語が指す内容を探す", "19": "時間配分を意識する", "20": "実用文は条件から調べる", "21": "段落ごとの小見出しを頭の中につける", "22": "「しかし」の数と配置で展開の変化を追う", "23": "問いかけの直後にある答えを探す", "24": "変化・対比を表すキーワードに注目する", "25": "選択肢を2つに絞った後、決定的な1語の違いを吟味する", "26": "問いの述語を再確認する", "27": "感情を表す言葉の理由を捉える", "28": "否定文の真意を読み取る", "29": "必要な情報だけを探すスキャニング", "30": "焦ったときほど筆者の重要なことに戻る"}, "reason_question_ids": ["N3-RD-006", "N3-RD-007", "N3-RD-013", "N3-RD-018"]};
+const Q = DATA.questions;
+const TIP_TITLES = DATA.tip_titles;
+
+let testQs=[], idx=0, answers=[], startedAt=0, qStartedAt=0, timerId=null, stage='answering';
+let studentId='', studentName='', attemptId='';
+
+function pad(n,len){ n=String(n); while(n.length<len) n='0'+n; return n; }
+function makeAttemptId(){
+  const d=new Date();
+  const ts=d.getFullYear()+pad(d.getMonth()+1,2)+pad(d.getDate(),2)+'-'+pad(d.getHours(),2)+pad(d.getMinutes(),2)+pad(d.getSeconds(),2);
+  const rand=Math.random().toString(36).slice(2,6).toUpperCase();
+  return 'JLPT-'+ts+'-'+rand;
+}
+function shuffle(a){
+  a=[...a];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function fmt(sec){
+  sec=Math.max(0,Math.round(sec));
+  const m=Math.floor(sec/60), s=sec%60;
+  return String(m).padStart(2,'0')+":"+String(s).padStart(2,'0');
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+/* ===================== 開始 ===================== */
+function startTest(){
+  studentId=document.getElementById('studentId').value.trim();
+  studentName=document.getElementById('studentName').value.trim();
+  if(!studentId){
+    document.getElementById('startError').style.display='block';
+    return;
+  }
+  attemptId=makeAttemptId();
+  const base=shuffle(Q);
+  testQs=base.map(q=>({
+    ...q,
+    displayChoices: shuffle(q.choices.map((text,k)=>({text:text,orig:String.fromCharCode(65+k)}))),
+    hasReason: REASON_QUESTION_IDS.includes(q.id)
+  }));
+  answers=[]; idx=0; startedAt=performance.now(); qStartedAt=startedAt;
+  document.getElementById('start').classList.add('hidden');
+  document.getElementById('test').classList.remove('hidden');
+  document.getElementById('actionbar').classList.remove('hidden');
+  window.scrollTo(0,0);
+  timerId=setInterval(updateTimer,500);
+  renderQ();
+}
+function updateTimer(){
+  if(stage!=='answering') return;
+  const q=testQs[idx];
+  const elapsed=(performance.now()-qStartedAt)/1000;
+  const box=document.getElementById('timerbox');
+  box.textContent=fmt(elapsed)+" ／ 目安"+q.seconds+"秒";
+  box.classList.toggle('over', elapsed>q.seconds);
+}
+function renderQ(){
+  stage='answering';
+  const q=testQs[idx];
+  qStartedAt=performance.now();
+  document.getElementById('qCount').textContent="質問 "+(idx+1)+" / "+testQs.length;
+  document.getElementById('bar').style.width=((idx/testQs.length)*100)+"%";
+  document.getElementById('question').textContent=q.question;
+  document.getElementById('passage').textContent=q.passage;
+  const box=document.getElementById('choices'); box.innerHTML="";
+  q.displayChoices.forEach((c,n)=>{
+    const b=document.createElement('button');
+    b.className='choice';
+    b.innerHTML='<span class="letter">'+String.fromCharCode(65+n)+'</span><span>'+escapeHtml(c.text)+'</span>';
+    b.onclick=()=>selectChoice(c.orig,b);
+    box.appendChild(b);
+  });
+  document.getElementById('resultZone').innerHTML='';
+  const btn=document.getElementById('mainBtn');
+  btn.textContent='回答する';
+  btn.disabled=true;
+  btn.onclick=submitAnswer;
+}
+function selectChoice(orig,el){
+  if(stage!=='answering') return;
+  document.querySelectorAll('#choices .choice').forEach(x=>x.classList.remove('selected'));
+  el.classList.add('selected');
+  el.dataset.orig=orig;
+  document.getElementById('mainBtn').disabled=false;
+}
+function submitAnswer(){
+  const selectedEl = document.querySelector('#choices .choice.selected');
+  if(!selectedEl) return;
+  const orig = selectedEl.dataset.orig;
+  const q=testQs[idx];
+  const startTime = qStartedAt;
+  const endTime = performance.now();
+  const time=(endTime-startTime)/1000;
+  const ok = orig===q.correct;
+  answers[idx]={
+    questionId:q.id, questionNumber:idx+1, orig:orig, correct:q.correct, isCorrect:ok,
+    time:time, startTime:startTime, endTime:endTime, reason:'', relatedTips:q.relatedTips
+  };
+  stage='answered';
+  const box=document.getElementById('timerbox');
+  box.textContent=fmt(time)+" ／ 目安"+q.seconds+"秒";
+  box.classList.toggle('over', time>q.seconds);
+  document.querySelectorAll('#choices .choice').forEach(el=>{
+    el.classList.add('locked');
+    el.onclick=null;
+    if(el.dataset.orig===q.correct) el.classList.add('correct');
+    else if(el===selectedEl) el.classList.add('wrongpick');
+  });
+  const selIdx = orig.charCodeAt(0)-65;
+  const explanation = ok? q.core : (q.wrong[selIdx]||q.core);
+
+  let html='<div class="resultbanner '+(ok?'good':'bad')+'">'+(ok?'✓ 正解！':'✗ 不正解')+'</div>';
+  if(q.hasReason){
+    html+='<label class="small">なぜこの答えを選びましたか？（任意）</label>'+
+      '<textarea id="reasonBox" placeholder="Contoh: kerana ayat itu ada dalam teks..."></textarea>';
+  }
+  html+='<div class="explain">'+
+    '<h4>💡 どこを見るか</h4><p>'+escapeHtml(q.where)+'</p>'+
+    '<h4>📖 解説</h4><p>'+escapeHtml(explanation)+'</p>'+
+    '<h4>📌 本文の根拠</h4><p>'+escapeHtml(q.evidence)+'</p>'+
+    '<h4>✨ Reading Tip</h4><p>'+escapeHtml(q.reading_tip)+'</p>'+
+    '</div>';
+  document.getElementById('resultZone').innerHTML=html;
+
+  const btn=document.getElementById('mainBtn');
+  btn.disabled=false;
+  btn.textContent = idx===testQs.length-1 ? '結果を見る' : '次の問題へ';
+  btn.onclick=nextQuestion;
+}
+function nextQuestion(){
+  const reasonBox=document.getElementById('reasonBox');
+  if(reasonBox) answers[idx].reason=reasonBox.value.trim();
+  if(idx<testQs.length-1){
+    idx++;
+    renderQ();
+    window.scrollTo(0,0);
+  }else{
+    finish();
+  }
+}
+
+/* ===================== 集計ロジック ===================== */
+function computeTipStats(overallAvg){
+  const stats={};
+  for(let t=1;t<=30;t++){
+    stats[t]={tipNumber:t, relatedQuestionCount:0, correctCount:0, wrongCount:0, totalTime:0};
+  }
+  testQs.forEach((q,i)=>{
+    const a=answers[i];
+    q.relatedTips.forEach(t=>{
+      const s=stats[t];
+      s.relatedQuestionCount++;
+      s.totalTime+=a.time;
+      if(a.isCorrect) s.correctCount++; else s.wrongCount++;
+    });
+  });
+  Object.values(stats).forEach(s=>{
+    s.accuracy = s.relatedQuestionCount? s.correctCount/s.relatedQuestionCount : null;
+    s.averageTime = s.relatedQuestionCount? s.totalTime/s.relatedQuestionCount : null;
+    if(s.relatedQuestionCount===0) s.measurementStatus='none';
+    else if(s.relatedQuestionCount<TIP_MIN_FOR_PATTERN) s.measurementStatus='reference';
+    else s.measurementStatus='pattern';
+    delete s.totalTime;
+  });
+  return stats;
+}
+function timeCategoryOf(a, overallAvg){
+  const isLong = a.time > overallAvg*TIME_LONG_MULTIPLIER;
+  if(a.isCorrect) return isLong? 'B':'A';
+  return isLong? 'D':'C';
+}
+function analyze(){
+  const total=(performance.now()-startedAt)/1000;
+  const overallAvg=total/testQs.length;
+  answers.forEach(a=>{ a.timeCategory=timeCategoryOf(a, overallAvg); });
+  const tipStats=computeTipStats(overallAvg);
+  const priorityTips=Object.values(tipStats).filter(s=>
+    s.measurementStatus==='pattern' && s.accuracy!==null && s.accuracy<0.5
+  ).sort((x,y)=>x.accuracy-y.accuracy).map(s=>s.tipNumber);
+  return {total, overallAvg, tipStats, priorityTips};
+}
+
+/* ===================== 終了処理 ===================== */
+function finish(){
+  clearInterval(timerId);
+  const {total, overallAvg, tipStats, priorityTips} = analyze();
+  const score=answers.filter(a=>a.isCorrect).length;
+
+  document.getElementById('test').classList.add('hidden');
+  document.getElementById('actionbar').classList.add('hidden');
+  document.getElementById('result').classList.remove('hidden');
+  document.getElementById('score').textContent=score+" / "+testQs.length;
+  document.getElementById('totalTime').textContent=fmt(total);
+  document.getElementById('avgTime').textContent=fmt(overallAvg);
+
+  renderStudentFeedback(score,total,overallAvg,tipStats,priorityTips);
+  renderStudentReview();
+  window.scrollTo(0,0);
+
+  const teacherReportText = makeTeacherReport(score,total,overallAvg,tipStats,priorityTips);
+  const payload = buildPayload(score,total,overallAvg,tipStats,priorityTips,teacherReportText);
+  sendToGAS(payload, teacherReportText);
+}
+
+function renderStudentFeedback(score,total,overallAvg,tipStats,priorityTips){
+  const accuracy=score/testQs.length;
+  let s='<h2>Gambaran keseluruhan</h2>';
+  s+='<p>Anda menjawab <b>'+score+' daripada '+testQs.length+' soalan</b> dengan betul dalam masa <b>'+fmt(total)+'</b> (purata '+fmt(overallAvg)+' seorang soalan).</p>';
+  s+='<p class="small muted">Diagnostik ini menggunakan 20 soalan sahaja, jadi anggap keputusan ini sebagai gambaran awal untuk perbincangan dengan guru, bukan penilaian muktamad kebolehan anda.</p>';
+
+  const measured=Object.values(tipStats).filter(t=>t.measurementStatus!=='none');
+  const good=measured.filter(t=>t.accuracy===1 && t.measurementStatus==='pattern');
+  s+='<h2>Perkara yang baik</h2>';
+  if(good.length){
+    s+='<ul>'+good.slice(0,3).map(t=>'<li>Soalan berkaitan Tip '+t.tipNumber+'（'+escapeHtml(TIP_TITLES[t.tipNumber])+'）dijawab dengan baik dalam percubaan kali ini.</li>').join('')+'</ul>';
+  }else{
+    s+='<p class="small">Teruskan usaha anda pada semua jenis soalan.</p>';
+  }
+
+  s+='<h2>Perkara untuk disemak kali ini</h2>';
+  if(!priorityTips.length){
+    s+='<p>Dalam percubaan kali ini, tiada satu Tip yang jelas menunjukkan corak kesilapan berulang. Teruskan latihan dengan pelbagai jenis teks.</p>';
+  }else{
+    priorityTips.slice(0,3).forEach(t=>{
+      const st=tipStats[t];
+      s+='<div class="tipcard"><b>Tip '+t+'：'+escapeHtml(TIP_TITLES[t])+'</b>'+
+         '<p class="small" style="margin-top:6px">Dalam soalan yang berkaitan dengan Tip ini ('+st.relatedQuestionCount+' soalan kali ini), terdapat beberapa kesilapan yang berkaitan dengan strategi ini. Ini bukan penilaian kebolehan, hanya corak yang dilihat pada percubaan kali ini.</p></div>';
+    });
+  }
+
+  s+='<h2>Kecenderungan mengikut Reading Tip</h2>';
+  s+='<p class="small muted">Diagnostik ini hanya menguji sebahagian daripada 30 Reading Tips. Tip yang tiada soalan berkaitan tidak dipaparkan di sini.</p>';
+  measured.sort((a,b)=>(a.accuracy??1)-(b.accuracy??1)).forEach(t=>{
+    const pct=t.accuracy===null?0:Math.round(t.accuracy*100);
+    const tag = t.measurementStatus==='pattern' ? '<span class="tag">Corak dikesan</span>' : '<span class="tag low">Data terhad</span>';
+    s+='<div class="tipcard"><div class="toprow"><span>Tip '+t.tipNumber+'：'+escapeHtml(TIP_TITLES[t.tipNumber])+tag+'</span><span>'+t.correctCount+'/'+t.relatedQuestionCount+'</span></div>'+
+       '<div class="tipbar"><div style="width:'+pct+'%"></div></div>'+
+       '<p class="small muted" style="margin-top:8px">Purata masa untuk soalan berkaitan: '+fmt(t.averageTime)+'</p></div>';
+  });
+
+  s+='<h2>Cadangan latihan seterusnya</h2>';
+  s+='<p class="small">Bincangkan keputusan ini dengan guru anda. Fokus pada Tip yang disenaraikan di atas, dan cuba soalan jenis yang sama dengan lebih teliti — bukan lebih laju.</p>';
+
+  document.getElementById('studentFeedback').innerHTML=s;
+}
+
+function renderStudentReview(){
+  const box=document.getElementById('studentReview'); box.innerHTML='';
+  testQs.forEach((q,i)=>{
+    const a=answers[i];
+    const selectedText=q.choices[a.orig.charCodeAt(0)-65];
+    const correctText=q.choices[q.correct.charCodeAt(0)-65];
+    const explanation = a.isCorrect? q.core : (q.wrong[a.orig.charCodeAt(0)-65]||q.core);
+    const d=document.createElement('div'); d.className='review';
+    let html='<h3>Q'+(i+1)+' '+(a.isCorrect?'✅':'❌')+'</h3>'+
+      '<p><b>Jawapan anda:</b> '+escapeHtml(selectedText)+'<br>'+
+      '<b>Jawapan betul:</b> '+escapeHtml(correctText)+'<br>'+
+      '<span class="muted small">Masa: '+fmt(a.time)+'</span></p>'+
+      '<p><b>Petunjuk:</b> '+escapeHtml(q.where)+'</p>'+
+      '<p>'+escapeHtml(explanation)+'</p>';
+    if(a.reason){
+      html+='<p class="small"><b>Sebab anda:</b> '+escapeHtml(a.reason)+'</p>';
+    }
+    d.innerHTML=html;
+    box.appendChild(d);
+  });
+}
+
+/* ===================== 教師レポート（日本語・非表示） ===================== */
+function timeCommentJa(a){
+  if(a.timeCategory==='A') return '正解・時間は標準的でした。';
+  if(a.timeCategory==='B') return '正解でしたが、平均より大幅に時間がかかりました。焦らず正確に読めている一方、スピード面は確認の余地があります。';
+  if(a.timeCategory==='C') return '短時間で不正解でした。急いで選んでしまった可能性があります。';
+  return '時間をかけたにもかかわらず不正解でした。読み方そのものの確認を優先したい問題です。';
+}
+function makeTeacherReport(score,total,overallAvg,tipStats,priorityTips){
+  const lines=[];
+  lines.push('JLPT N3 読解診断レポート');
+  lines.push('Student ID：'+studentId);
+  lines.push('名前：'+(studentName||'（未入力）'));
+  lines.push('Attempt ID：'+attemptId);
+  lines.push('日時：'+new Date().toLocaleString('ja-JP'));
+  lines.push('スコア：'+score+' / '+testQs.length+'（正答率 '+Math.round(score/testQs.length*100)+'%）');
+  lines.push('総所要時間：'+fmt(total)+'／平均：'+fmt(overallAvg)+' 問あたり');
+  lines.push('');
+
+  lines.push('【時間分析】');
+  const sorted=[...answers].sort((x,y)=>y.time-x.time);
+  lines.push('・最も時間がかかった問題：Q'+sorted[0].questionNumber+'（'+fmt(sorted[0].time)+'）');
+  const muchSlower=answers.filter(a=>a.time>overallAvg*TIME_LONG_MULTIPLIER);
+  lines.push('・平均より大幅（'+TIME_LONG_MULTIPLIER+'倍以上）に時間がかかった問題：'+
+    (muchSlower.length? muchSlower.map(a=>'Q'+a.questionNumber).join('、') : 'なし'));
+  const correctSlow=answers.filter(a=>a.timeCategory==='B');
+  lines.push('・正解だが時間が長かった問題：'+(correctSlow.length? correctSlow.map(a=>'Q'+a.questionNumber).join('、') : 'なし')+
+    '（※能力不足ではなく、慎重さの表れである可能性があります）');
+  const wrongFast=answers.filter(a=>a.timeCategory==='C');
+  lines.push('・短時間で誤答した問題：'+(wrongFast.length? wrongFast.map(a=>'Q'+a.questionNumber).join('、') : 'なし'));
+  lines.push('');
+
+  lines.push('【Reading Tip分析（1〜30）】');
+  lines.push('※学習者は今回20問しか解いていないため、関連問題数が少ないTipは「参考データ」として扱ってください。');
+  for(let t=1;t<=30;t++){
+    const s=tipStats[t];
+    const statusLabel = s.measurementStatus==='none' ? '今回未測定'
+      : s.measurementStatus==='reference' ? '参考データ（'+s.relatedQuestionCount+'問）'
+      : '傾向を確認できる（'+s.relatedQuestionCount+'問）';
+    if(s.measurementStatus==='none'){
+      lines.push('・Tip '+t+'「'+TIP_TITLES[t]+'」：'+statusLabel);
+    }else{
+      lines.push('・Tip '+t+'「'+TIP_TITLES[t]+'」：'+statusLabel+'／正答 '+s.correctCount+'/'+s.relatedQuestionCount+
+        '（'+Math.round(s.accuracy*100)+'%）／平均時間 '+fmt(s.averageTime));
+    }
+  }
+  lines.push('');
+
+  lines.push('【問題別分析】');
+  testQs.forEach((q,i)=>{
+    const a=answers[i];
+    const sel=q.choices[a.orig.charCodeAt(0)-65], cor=q.choices[q.correct.charCodeAt(0)-65];
+    let line='Q'+(i+1)+'（'+q.id+'／関連Tip: '+q.relatedTips.join(',')+'）：'+
+      a.orig+'「'+sel+'」／正解 '+q.correct+'「'+cor+'」／'+(a.isCorrect?'正解':'不正解')+'／'+fmt(a.time)+
+      '／'+timeCommentJa(a);
+    if(a.reason) line+='／回答理由：'+a.reason;
+    lines.push(line);
+  });
+  lines.push('');
+
+  lines.push('【総合コメント】');
+  if(priorityTips.length){
+    lines.push('今回の診断で確認を優先したい項目：'+priorityTips.map(t=>'Tip '+t+'「'+TIP_TITLES[t]+'」').join('、')+'。');
+    lines.push('これらのTipに関連する複数の問題で誤答傾向が見られましたが、20問のみの結果のため、次回以降の診断とあわせて確認することをおすすめします。');
+  }else{
+    lines.push('今回の問題セットでは、複数問題にまたがる明確な誤答傾向は確認されませんでした。');
+  }
+  const slowNote = correctSlow.length ? '正解しているが時間がかかる問題が見られました。理解はできているため、スピードよりも正確さを優先した学習方針が適しています。' : '';
+  if(slowNote) lines.push(slowNote);
+
+  return lines.join('\n');
+}
+
+/* ===================== 送信・保存 ===================== */
+function buildPayload(score,total,overallAvg,tipStats,priorityTips,teacherReportText){
+  return {
+    attempt:{
+      timestamp:new Date().toISOString(), attemptId, studentId, name:studentName,
+      score, totalQuestions:testQs.length, accuracy:score/testQs.length,
+      totalTime:total, averageTime:overallAvg, priorityTips:priorityTips.join(','),
+      teacherReport:teacherReportText
+    },
+    answers: answers.map(a=>({
+      attemptId, studentId, questionId:a.questionId, questionNumber:a.questionNumber,
+      selectedAnswer:a.orig, correctAnswer:a.correct, isCorrect:a.isCorrect,
+      elapsedTime:a.time, timeCategory:a.timeCategory, reason:a.reason,
+      relatedTips:a.relatedTips.join(',')
+    })),
+    tipStats: Object.values(tipStats).map(s=>({
+      attemptId, studentId, tipNumber:s.tipNumber, relatedQuestionCount:s.relatedQuestionCount,
+      correctCount:s.correctCount, wrongCount:s.wrongCount,
+      accuracy:s.accuracy, averageTime:s.averageTime, measurementStatus:s.measurementStatus
+    }))
+  };
+}
+function sendToGAS(payload, teacherReportText){
+  const statusEl=document.getElementById('saveStatus');
+  const fallbackZone=document.getElementById('fallbackZone');
+  function showFallback(){
+    statusEl.textContent='結果の自動保存ができませんでした。下のボタンで結果をコピーし、先生に送ってください。';
+    fallbackZone.innerHTML='<textarea id="fallbackText" readonly style="min-height:200px">'+escapeHtml(teacherReportText)+'</textarea>'+
+      '<p style="margin-top:10px"><button class="bigbtn secondary" onclick="copyFallback()">結果をコピー</button></p>';
+  }
+  if(!GAS_URL){
+    showFallback();
+    return;
+  }
+  statusEl.textContent='結果を保存しています…';
+  fetch(GAS_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'}, // GAS doPostはtext/plainで受けてJSON.parseするのが安定
+    body: JSON.stringify(payload)
+  }).then(r=>r.json()).then(res=>{
+    if(res && res.ok){
+      statusEl.textContent='結果を保存し、先生に送信しました。';
+    }else{
+      showFallback();
+    }
+  }).catch(()=>{
+    showFallback();
+  });
+}
+function copyFallback(){
+  const t=document.getElementById('fallbackText').value;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(t).then(()=>alert('コピーしました。')).catch(()=>{
+      document.getElementById('fallbackText').select(); document.execCommand('copy'); alert('コピーしました。');
+    });
+  }else{
+    document.getElementById('fallbackText').select();
+    document.execCommand('copy');
+    alert('コピーしました。');
+  }
+}
+</script>
+</body>
+</html>
