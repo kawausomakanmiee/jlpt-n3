@@ -151,7 +151,7 @@ ul{padding-left:22px;margin:8px 0}
 <input id="studentId" type="text" placeholder="例：MYS001">
 <label style="margin-top:14px;display:block">名前・ニックネーム（任意）</label>
 <input id="studentName" type="text" placeholder="例：Aina">
-<p id="startError" class="small" style="color:var(--bad);display:none">Student IDを入力してください。</p>
+<p id="startError" class="small" style="display:none"></p>
 <p style="margin-top:18px"><button class="bigbtn" onclick="startTest()">はじめる</button></p>
 </section>
 
@@ -205,7 +205,7 @@ ul{padding-left:22px;margin:8px 0}
 /* ===================== 設定（CONFIG） ===================== */
 // Google Apps ScriptをWebアプリとしてデプロイした後に発行される /exec URL をここに設定してください。
 // 手順は README（セットアップガイド）を参照してください。
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxpGFQOJ4LMIdRhKlCbHDDDwSVrozXAS4AJE2mhzgjzsYKE4tph8NsP_T8fB1aliTgFew/exec"; // 例: "https://script.google.com/macros/s/AKfycbxpGFQOJ4LMIdRhKlCbHDDDwSVrozXAS4AJE2mhzgjzsYKE4tph8NsP_T8fB1aliTgFew/exec"
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxpGFQOJ4LMIdRhKlCbHDDDwSVrozXAS4AJE2mhzgjzsYKE4tph8NsP_T8fB1aliTgFew/exec"; // 例: "https://script.google.com/macros/s/XXXXXXXX/exec"
 
 const REASON_QUESTION_IDS = ["N3-RD-006", "N3-RD-007", "N3-RD-013", "N3-RD-018"];
 const TIME_LONG_MULTIPLIER = 1.5; // 自分の平均時間の何倍を「長い」とみなすか
@@ -244,13 +244,55 @@ function escapeHtml(s){
 }
 
 /* ===================== 開始 ===================== */
+function setStartMessage(text, isError){
+  const el=document.getElementById('startError');
+  el.textContent=text;
+  el.style.color = isError ? 'var(--bad)' : 'var(--muted)';
+  el.style.display = text ? 'block' : 'none';
+}
 function startTest(){
   studentId=document.getElementById('studentId').value.trim();
   studentName=document.getElementById('studentName').value.trim();
   if(!studentId){
-    document.getElementById('startError').style.display='block';
+    setStartMessage('Student IDを入力してください。', true);
     return;
   }
+  const btn=document.querySelector('#start .bigbtn');
+
+  if(!GAS_URL){
+    // GAS未設定（お手元でのテスト時など）は名簿チェックをスキップ
+    actualStartTest();
+    return;
+  }
+
+  btn.disabled=true;
+  setStartMessage('Student IDを確認しています…', false);
+  fetch(GAS_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({action:'checkStudent', studentId})
+  }).then(r=>r.json()).then(res=>{
+    btn.disabled=false;
+    if(!res || !res.ok){
+      setStartMessage('確認中にエラーが発生しました。もう一度お試しください。', true);
+      return;
+    }
+    if(!res.found){
+      setStartMessage('このStudent IDは登録されていません。先生に確認してください。', true);
+      return;
+    }
+    if(!res.active){
+      setStartMessage('このIDは現在無効になっています。先生に確認してください。', true);
+      return;
+    }
+    setStartMessage('', false);
+    actualStartTest();
+  }).catch(()=>{
+    btn.disabled=false;
+    setStartMessage('通信エラーのため確認できませんでした。もう一度お試しください。', true);
+  });
+}
+function actualStartTest(){
   attemptId=makeAttemptId();
   const base=shuffle(Q);
   testQs=base.map(q=>({
