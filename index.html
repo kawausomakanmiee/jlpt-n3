@@ -274,7 +274,7 @@ function startTest(){
   }).then(r=>r.json()).then(res=>{
     btn.disabled=false;
     if(!res || !res.ok){
-      setStartMessage('確認中にエラーが発生しました。もう一度お試しください。', true);
+      setStartMessage('確認中にエラーが発生しました：' + (res && res.error ? res.error : '(サーバーから詳細が返りませんでした)'), true);
       return;
     }
     if(!res.found){
