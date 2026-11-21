@@ -186,6 +186,38 @@ ul{padding-left:22px;margin:8px 0}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 
+
+/* Result screen: scan-first summary, optional detail, accessible comparisons */
+.result-intro{font-size:14px;color:var(--muted);margin:8px 0 4px}
+.result-overview{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 22px}
+.result-panel{border:1px solid var(--line);background:color-mix(in srgb,var(--teal) 5%,var(--card));border-radius:16px;padding:17px}
+.result-panel.attention{background:color-mix(in srgb,var(--amber) 9%,var(--card))}
+.result-panel h3{font-size:16px;margin:0 0 8px}
+.result-panel p{margin:0;font-size:14px;line-height:1.75}
+.result-eyebrow{display:block;font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--muted);margin:0 0 5px}
+.result-section-title{margin:26px 0 9px;font-size:18px}
+.result-meta{font-size:12px;line-height:1.7;color:var(--muted);margin:0 0 16px}
+.result-skill{border:1px solid var(--line);padding:14px 16px;border-radius:14px;margin:10px 0}
+.result-skill-header{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;font-weight:800}
+.result-skill small{font-size:12px;font-weight:500;color:var(--muted)}
+.result-skill-track{height:9px;background:var(--line);border-radius:99px;overflow:hidden;margin:9px 0}
+.result-skill-track div{height:100%;background:var(--teal);border-radius:99px}
+.result-detail{border:1px solid var(--line);border-radius:15px;margin:16px 0;padding:0 16px;background:var(--card)}
+.result-detail>summary{padding:17px 0;font-size:15px;font-weight:800;cursor:pointer}
+.result-detail[open]>summary{border-bottom:1px solid var(--line);margin-bottom:14px}
+.result-detail>summary:focus-visible{outline:3px solid var(--ui-focus);outline-offset:3px}
+.result-detail .tipcard{margin:10px 0}
+.review-detail{margin:10px 0;border:1px solid var(--line);border-radius:13px;padding:0 14px}
+.review-detail summary{padding:14px 0;display:flex;justify-content:space-between;gap:10px;cursor:pointer;font-size:14px;font-weight:800;list-style-position:inside}
+.review-detail[open] summary{border-bottom:1px solid var(--line)}
+.review-detail .review-body{padding:10px 2px 16px;font-size:14px;line-height:1.9;overflow-wrap:break-word}
+#result .stats .stat{color:#fff}
+#result .stats .stat:nth-child(1){background:var(--violet)}
+#result .stats .stat:nth-child(2){background:#176d80}
+#result .stats .stat:nth-child(3){background:#37766e}
+#result .stat span{opacity:1}
+@media(max-width:520px){.result-overview{grid-template-columns:1fr}.result-panel{padding:15px}.result-skill-header{align-items:flex-start}}
+
 </style>
 </head>
 <body>
@@ -229,18 +261,22 @@ ul{padding-left:22px;margin:8px 0}
 
 <section id="result" class="hidden">
 <div class="card">
+<div class="start-eyebrow">YOUR READING PROFILE</div>
 <h1>📊 Keputusan Anda</h1>
+<p class="result-intro">Ringkasan prestasi dan langkah latihan yang disyorkan berdasarkan percubaan ini.</p>
 <div class="stats">
 <div class="stat"><span>Skor</span><b id="score"></b></div>
 <div class="stat"><span>Masa</span><b id="totalTime"></b></div>
-<div class="stat"><span>Purata</span><b id="avgTime"></b></div>
+<div class="stat"><span>Purata masa sesi / soalan</span><b id="avgTime"></b></div>
 </div>
+<p class="result-meta">Nota: Masa sesi termasuk membaca penjelasan selepas menjawab, jadi bukan ukuran masa menjawab sahaja.</p>
 <div id="studentFeedback"></div>
 </div>
 
 <div class="card">
 <h2>📚 Semakan Jawapan</h2>
 <p class="muted small">Semak jawapan anda dan lihat sebab jawapan itu betul atau perlu diperbaiki.</p>
+<p class="result-meta">Tekan nombor soalan untuk melihat jawapan dan penjelasan. Soalan yang salah ditunjukkan dahulu.</p>
 <div id="studentReview"></div>
 </div>
 
@@ -524,66 +560,70 @@ function finish(){
 }
 
 function renderStudentFeedback(score,total,overallAvg,tipStats,priorityTips){
-  const accuracy=score/testQs.length;
-  let s='<h2>Gambaran keseluruhan</h2>';
-  s+='<p>Anda menjawab <b>'+score+' daripada '+testQs.length+' soalan</b> dengan betul dalam masa <b>'+fmt(total)+'</b> (purata '+fmt(overallAvg)+' seorang soalan).</p>';
-  s+='<p class="small muted">Diagnostik ini menggunakan 20 soalan sahaja, jadi anggap keputusan ini sebagai gambaran awal untuk perbincangan dengan guru, bukan penilaian muktamad kebolehan anda.</p>';
-
   const measured=Object.values(tipStats).filter(t=>t.measurementStatus!=='none');
-  const good=measured.filter(t=>t.accuracy===1 && t.measurementStatus==='pattern');
-  s+='<h2>Perkara yang baik</h2>';
-  if(good.length){
-    s+='<ul>'+good.slice(0,3).map(t=>'<li>Soalan berkaitan Tip '+t.tipNumber+'（'+escapeHtml(TIP_TITLES[t.tipNumber])+'）dijawab dengan baik dalam percubaan kali ini.</li>').join('')+'</ul>';
-  }else{
-    s+='<p class="small">Teruskan usaha anda pada semua jenis soalan.</p>';
-  }
-
-  s+='<h2>Perkara untuk disemak kali ini</h2>';
-  if(!priorityTips.length){
-    s+='<p>Dalam percubaan kali ini, tiada satu Tip yang jelas menunjukkan corak kesilapan berulang. Teruskan latihan dengan pelbagai jenis teks.</p>';
-  }else{
-    priorityTips.slice(0,3).forEach(t=>{
-      const st=tipStats[t];
-      s+='<div class="tipcard"><b>Tip '+t+'：'+escapeHtml(TIP_TITLES[t])+'</b>'+
-         '<p class="small" style="margin-top:6px">Dalam soalan yang berkaitan dengan Tip ini ('+st.relatedQuestionCount+' soalan kali ini), terdapat beberapa kesilapan yang berkaitan dengan strategi ini. Ini bukan penilaian kebolehan, hanya corak yang dilihat pada percubaan kali ini.</p></div>';
+  const supported=measured.filter(t=>t.measurementStatus==='pattern');
+  const good=supported.filter(t=>t.accuracy===1);
+  const needsReview=priorityTips.map(n=>tipStats[n]).filter(Boolean);
+  const wrong=answers.filter(a=>!a.isCorrect);
+  let s='<p class="result-meta">Keputusan ini berdasarkan 20 soalan. Setiap soalan boleh dikaitkan dengan lebih daripada satu Tip; keputusan ini bukan diagnosis muktamad.</p>';
+  s+='<div class="result-overview">';
+  s+='<div class="result-panel"><span class="result-eyebrow">KEKUATAN KALI INI</span><h3>Yang berjalan baik</h3>';
+  s+='<p>'+(good.length
+    ? good.slice(0,2).map(t=>'Tip '+t.tipNumber+' — '+escapeHtml(TIP_TITLES[t.tipNumber])).join('<br>')
+    : (wrong.length===0?'Semua jawapan betul. Cuba teks baharu untuk mengesahkan kefahaman.':'Belum ada Tip dengan bukti mencukupi untuk disimpulkan sebagai kekuatan.'))+'</p></div>';
+  s+='<div class="result-panel attention"><span class="result-eyebrow">FOKUS SETERUSNYA</span><h3>Perlu disemak</h3>';
+  s+='<p>'+(needsReview.length
+    ? needsReview.slice(0,2).map(t=>'Tip '+t.tipNumber+' — '+escapeHtml(TIP_TITLES[t.tipNumber])).join('<br>')
+    : (wrong.length? 'Semak '+wrong.slice(0,3).map(a=>'Q'+a.questionNumber).join(', ')+'. Data belum cukup untuk menetapkan kelemahan Tip tertentu.':'Teruskan dengan bacaan baharu dan soalan yang lebih mencabar.'))+'</p></div></div>';
+  s+='<h2 class="result-section-title">Langkah latihan yang dicadangkan</h2>';
+  s+='<p>'+(needsReview.length
+    ? 'Mulakan dengan Tip '+needsReview.slice(0,2).map(t=>t.tipNumber).join(' dan ')+'. Cari bukti dalam teks sebelum memilih jawapan, kemudian bincangkan sebabnya dengan guru.'
+    : wrong.length
+      ? 'Baca semula soalan yang salah dan tunjukkan ayat yang menyokong jawapan betul kepada guru.'
+      : 'Cuba set soalan baharu untuk membezakan kefahaman daripada ingatan jawapan.')+'</p>';
+  s+='<h2 class="result-section-title">Ringkasan mengikut Reading Tip</h2>';
+  s+='<p class="result-meta">Hanya Tip yang mempunyai soalan berkaitan dipaparkan. Bilangan soalan berbeza mengikut Tip.</p>';
+  const featured=[...supported].sort((a,b)=>a.accuracy-b.accuracy).slice(0,5);
+  if(featured.length){
+    featured.forEach(t=>{
+      const pct=Math.round(t.accuracy*100);
+      s+='<div class="result-skill"><div class="result-skill-header"><span>Tip '+t.tipNumber+' — '+escapeHtml(TIP_TITLES[t.tipNumber])+'</span><span>'+t.correctCount+'/'+t.relatedQuestionCount+'</span></div>'+
+      '<div class="result-skill-track" role="meter" aria-label="Tip '+t.tipNumber+' ketepatan" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+pct+'"><div style="width:'+pct+'%"></div></div><small>'+pct+'% jawapan betul dalam soalan berkaitan · '+t.relatedQuestionCount+' soalan</small></div>';
     });
+  }else{
+    s+='<p class="small">Belum ada Tip dengan sekurang-kurangnya '+TIP_MIN_FOR_PATTERN+' soalan berkaitan.</p>';
   }
-
-  s+='<h2>Kecenderungan mengikut Reading Tip</h2>';
-  s+='<p class="small muted">Diagnostik ini hanya menguji sebahagian daripada 30 Reading Tips. Tip yang tiada soalan berkaitan tidak dipaparkan di sini.</p>';
-  measured.sort((a,b)=>(a.accuracy??1)-(b.accuracy??1)).forEach(t=>{
-    const pct=t.accuracy===null?0:Math.round(t.accuracy*100);
-    const tag = t.measurementStatus==='pattern' ? '<span class="tag">Corak dikesan</span>' : '<span class="tag low">Data terhad</span>';
-    s+='<div class="tipcard"><div class="toprow"><span>Tip '+t.tipNumber+'：'+escapeHtml(TIP_TITLES[t.tipNumber])+tag+'</span><span>'+t.correctCount+'/'+t.relatedQuestionCount+'</span></div>'+
-       '<div class="tipbar"><div style="width:'+pct+'%"></div></div>'+
-       '<p class="small muted" style="margin-top:8px">Purata masa untuk soalan berkaitan: '+fmt(t.averageTime)+'</p></div>';
+  s+='<details class="result-detail"><summary>Lihat semua Tip yang diuji ('+measured.length+')</summary>';
+  measured.sort((a,b)=>a.tipNumber-b.tipNumber).forEach(t=>{
+    const pct=Math.round(t.accuracy*100);
+    const status=t.measurementStatus==='pattern'?'Sekurang-kurangnya 3 soalan berkaitan':'Data terhad';
+    s+='<div class="tipcard"><div class="toprow"><span>Tip '+t.tipNumber+' — '+escapeHtml(TIP_TITLES[t.tipNumber])+'</span><span>'+t.correctCount+'/'+t.relatedQuestionCount+'</span></div>'+
+    '<div class="tipbar" role="meter" aria-label="Tip '+t.tipNumber+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+pct+'"><div style="width:'+pct+'%"></div></div>'+
+    '<p class="result-meta" style="margin-top:8px">'+status+' · Masa purata menjawab: '+fmt(t.averageTime)+'</p></div>';
   });
-
-  s+='<h2>Cadangan latihan seterusnya</h2>';
-  s+='<p class="small">Bincangkan keputusan ini dengan guru anda. Fokus pada Tip yang disenaraikan di atas, dan cuba soalan jenis yang sama dengan lebih teliti — bukan lebih laju.</p>';
-
+  s+='</details>';
   document.getElementById('studentFeedback').innerHTML=s;
 }
-
 function renderStudentReview(){
-  const box=document.getElementById('studentReview'); box.innerHTML='';
-  testQs.forEach((q,i)=>{
-    const a=answers[i];
-    const selectedText=q.choices[a.orig.charCodeAt(0)-65];
-    const correctText=q.choices[q.correct.charCodeAt(0)-65];
-    const explanation = a.isCorrect? q.core : (q.wrong[a.orig.charCodeAt(0)-65]||q.core);
-    const d=document.createElement('div'); d.className='review';
-    let html='<h3>Q'+(i+1)+' '+(a.isCorrect?'✅':'❌')+'</h3>'+
-      '<p><b>Jawapan anda:</b> '+escapeHtml(selectedText)+'<br>'+
-      '<b>Jawapan betul:</b> '+escapeHtml(correctText)+'<br>'+
-      '<span class="muted small">Masa: '+fmt(a.time)+'</span></p>'+
+  const box=document.getElementById('studentReview');
+  box.innerHTML='';
+  const order=testQs.map((q,i)=>i).sort((a,b)=>Number(answers[a].isCorrect)-Number(answers[b].isCorrect)||a-b);
+  order.forEach(i=>{
+    const q=testQs[i],a=answers[i],selectedText=q.choices[a.orig.charCodeAt(0)-65],correctText=q.choices[q.correct.charCodeAt(0)-65];
+    const explanation=a.isCorrect?q.core:(q.wrong[a.orig.charCodeAt(0)-65]||q.core);
+    const d=document.createElement('details');
+    d.className='review-detail';
+    const summary=document.createElement('summary');
+    summary.textContent='Q'+(i+1)+' · '+(a.isCorrect?'✓ Betul':'✕ Perlu disemak')+' · '+fmt(a.time);
+    d.appendChild(summary);
+    const body=document.createElement('div');
+    body.className='review-body';
+    body.innerHTML='<p><b>Jawapan anda:</b> '+escapeHtml(selectedText)+'</p>'+
+      '<p><b>Jawapan betul:</b> '+escapeHtml(correctText)+'</p>'+
       '<p><b>Petunjuk:</b> '+escapeHtml(q.where)+'</p>'+
       '<p>'+escapeHtml(explanation)+'</p>';
-    if(a.reason){
-      html+='<p class="small"><b>Sebab anda:</b> '+escapeHtml(a.reason)+'</p>';
-    }
-    d.innerHTML=html;
-    box.appendChild(d);
+    if(a.reason)body.innerHTML+='<p><b>Sebab anda:</b> '+escapeHtml(a.reason)+'</p>';
+    d.appendChild(body);box.appendChild(d);
   });
 }
 
