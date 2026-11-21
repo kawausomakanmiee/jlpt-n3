@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic:wght@400;700&family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/budoux/bundle/budoux-ja.min.js"></script>
   <style>
 :root{
@@ -43,6 +43,15 @@ body{
   padding-bottom:calc(env(safe-area-inset-bottom,0px) + 8px);
   line-height:1.7;
 }
+/* Reading areas: use textbook-friendly UD type where available.
+   Device fonts are not bundled; BIZ UD Gothic is a licensed Google Fonts fallback. */
+#question, #passage, #choices .choice, #studentReview .review {
+  font-family:"UD Digi Kyokasho N-R","UD デジタル 教科書体 N",
+    "UD デジタル 教科書体 N-R","BIZ UDGothic",sans-serif;
+  line-height:1.85;
+}
+#choices .choice{border-radius:16px;align-items:flex-start;overflow-wrap:anywhere;}
+#choices .choice .letter{margin-top:2px;}
 .wrap{max-width:640px;margin:0 auto;padding:20px 16px 130px}
 h1,h2,h3{line-height:1.35;margin:0 0 10px;font-weight:900}
 h1{font-size:26px}
