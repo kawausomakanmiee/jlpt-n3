@@ -555,15 +555,37 @@ const TIP_MALAY = {
   27:'Fahami sebab perasaan penulis',28:'Fahami maksud ayat negatif',
   29:'Cari hanya maklumat yang diperlukan',30:'Kembali kepada mesej utama penulis'
 };
+const PNG_SKILL_MALAY={
+  '条件・情報検索':'Mencari maklumat dan menyemak syarat',
+  '指示語':'Memahami kata rujukan',
+  '詳細情報の照合':'Menyemak butiran dalam teks',
+  '因果関係':'Memahami sebab dan akibat',
+  '言い換え':'Memahami maksud yang sama',
+  '推論・意図':'Membuat inferens dan memahami tujuan',
+  '主旨・主張':'Memahami idea utama dan pendapat penulis'
+};
+const PNG_FOCUS_MALAY={
+  11:'Menyemak syarat dan pengecualian diskaun',
+  12:'Membezakan maklumat lama dan baharu',
+  13:'Memahami ungkapan dengan maksud yang sama',
+  14:'Mengenal pasti rujukan kata tunjuk',
+  15:'Menghubungkan maklumat tentang sebab dan akibat',
+  16:'Membezakan pendapat penulis daripada sebab dan masalah',
+  17:'Memahami perubahan pendapat penulis',
+  18:'Menggabungkan beberapa syarat dan pengecualian',
+  19:'Membuat inferens daripada beberapa bahagian teks',
+  20:'Mengenal pasti kesimpulan yang terlalu umum'
+};
 function pngFocus(q){
-  const v=(q.measured_skill||q.focusSkill||q.skillGroup||'Kemahiran membaca').split('（')[0].trim();
-  return v || 'Kemahiran membaca';
+  if(PNG_FOCUS_MALAY[q.num])return PNG_FOCUS_MALAY[q.num];
+  const v=(q.measured_skill||'').split('（')[0].trim();
+  return /^[A-Za-z]/.test(v)?v:(PNG_SKILL_MALAY[q.skillGroup]||'Kemahiran membaca');
 }
 function pngContent(){
   const score=answers.filter(a=>a.isCorrect).length;
   const all=answers.length;
   const strengths=skillStats().filter(g=>g.correct>0).sort((a,b)=>(b.correct/b.total)-(a.correct/a.total)||b.correct-a.correct);
-  const good=strengths.slice(0,2).map(g=>g.label);
+  const good=strengths.slice(0,2).map(g=>PNG_SKILL_MALAY[g.label]||'kemahiran membaca');
   const suggestions=learningSuggestions().slice(0,2);
   const tips=[];
   suggestions.forEach(({q})=>(q.relatedTips||[]).forEach(n=>{if(!tips.includes(n)&&tips.length<3)tips.push(n)}));
@@ -643,7 +665,7 @@ function buildGrowthCanvas(){
     y+=55;rule();
     header('Apa yang anda sudah lakukan dengan baik');
     if(data.good.length){
-      panel('Kekuatan dalam ujian ini', 'Syabas! Anda menjawab soalan dalam bidang '+data.good.join(' dan ')+' dengan betul. Terus gunakan cara membaca yang membantu anda.');
+      panel('Kekuatan dalam ujian ini', 'Syabas! Anda berjaya menjawab soalan berkaitan '+data.good.join(' dan ')+' dengan betul dalam ujian ini. Teruskan usaha anda!');
     }else if(data.score>0){
       panel('Pencapaian anda','Syabas! Anda telah menjawab '+data.score+' soalan dengan betul. Gunakan jawapan yang berjaya sebagai panduan untuk latihan seterusnya.');
     }else{
@@ -655,7 +677,7 @@ function buildGrowthCanvas(){
     }else{
       data.suggestions.forEach(({q},i)=>{
         panel('Fokus '+(i+1)+' · '+pngFocus(q),
-          'Latih cara membaca ini dengan lebih teliti. Rujuk semula bukti dalam teks dan bandingkan dengan pilihan jawapan.');
+          'Cuba baca semula bahagian teks yang berkaitan, kemudian periksa sama ada pilihan jawapan benar-benar sepadan dengan maklumat dalam teks.');
       });
     }
     if(data.tips.length){
