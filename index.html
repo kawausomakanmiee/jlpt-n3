@@ -126,6 +126,8 @@ textarea{
 .tipbar > div{height:100%;background:linear-gradient(90deg,var(--teal),var(--violet))}
 .tag{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--amber);color:#4A3300;margin-left:6px}
 .tag.low{background:var(--line);color:var(--muted)}
+.png-save{margin-top:24px;border-top:1px solid var(--line);padding-top:20px}
+.png-save .bigbtn{width:100%}
 .review{border:1px solid var(--line);border-radius:13px;margin:10px 0;overflow:hidden;background:var(--card)}
 .review summary{cursor:pointer;padding:13px 14px;font-weight:800;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .review summary::-webkit-details-marker{display:none}
@@ -190,6 +192,11 @@ ul{padding-left:22px;margin:8px 0}
 <div class="stat"><span>Purata</span><b id="avgTime"></b></div>
 </div>
 <div id="studentFeedback"></div>
+<div class="png-save">
+  <button class="bigbtn" type="button" id="savePngButton" onclick="saveGrowthPNG()">📱 Simpan laporan sebagai PNG</button>
+  <p class="muted small">Simpan ringkasan kemajuan anda sebagai satu gambar menegak. Penjelasan jawapan penuh kekal di halaman ini.</p>
+  <p id="pngSaveMessage" class="small" role="status" aria-live="polite"></p>
+</div>
 </div>
 
 <div class="card">
@@ -530,6 +537,165 @@ function renderStudentFeedback(score,total,overallAvg,tipStats,priorityTips){
   s+='<h2>Cuba, perbaiki, semak semula</h2>';
   s+='<p class="small">1. Baca bukti dalam teks untuk soalan yang tersilap. 2. Amalkan Reading Tips yang dicadangkan. 3. Cuba soalan baharu dengan kemahiran yang sama dan lihat perubahan anda.</p>';
   document.getElementById('studentFeedback').innerHTML=s;
+}
+
+/* ===================== 学習者向け縦長PNG（端末内で生成、外部送信なし） ===================== */
+const TIP_MALAY = {
+  1:'Perhatikan awal dan akhir perenggan',2:'Baca soalan sebelum teks',3:'Cari kata kunci yang berulang',
+  4:'Kenal pasti perubahan selepas kata hubung',5:'Kenal pasti rumusan utama',6:'Hubungkan sebab dengan akibat',
+  7:'Bandingkan dua pandangan',8:'Bezakan contoh daripada idea utama',9:'Teruskan membaca walaupun ada perkataan baharu',
+  10:'Kenal pasti pendapat penulis',11:'Periksa pilihan jawapan yang hanya separuh betul',
+  12:'Berhati-hati dengan ungkapan yang terlalu mutlak',13:'Jawab berdasarkan teks, bukan andaian',
+  14:'Jangan tertipu oleh perkataan yang sama',15:'Semak arah hubungan sebab dan akibat',
+  16:'Semak subjek dan predikat',17:'Susun dua perkara yang dibandingkan',18:'Kenal pasti rujukan kata tunjuk',
+  19:'Rancang masa menjawab',20:'Semak semua syarat dalam teks praktikal',
+  21:'Ringkaskan isi setiap perenggan',22:'Perhatikan perubahan selepas しかし',
+  23:'Cari jawapan selepas soalan dalam teks',24:'Kesan kata yang menunjukkan perubahan',
+  25:'Bandingkan perbezaan penting antara dua pilihan',26:'Baca semula perkara yang ditanya',
+  27:'Fahami sebab perasaan penulis',28:'Fahami maksud ayat negatif',
+  29:'Cari hanya maklumat yang diperlukan',30:'Kembali kepada mesej utama penulis'
+};
+function pngFocus(q){
+  const v=(q.measured_skill||q.focusSkill||q.skillGroup||'Kemahiran membaca').split('（')[0].trim();
+  return v || 'Kemahiran membaca';
+}
+function pngContent(){
+  const score=answers.filter(a=>a.isCorrect).length;
+  const all=answers.length;
+  const strengths=skillStats().filter(g=>g.correct>0).sort((a,b)=>(b.correct/b.total)-(a.correct/a.total)||b.correct-a.correct);
+  const good=strengths.slice(0,2).map(g=>g.label);
+  const suggestions=learningSuggestions().slice(0,2);
+  const tips=[];
+  suggestions.forEach(({q})=>(q.relatedTips||[]).forEach(n=>{if(!tips.includes(n)&&tips.length<3)tips.push(n)}));
+  return {score,all,good,suggestions,tips,
+    time:fmt(answers.reduce((sum,a)=>sum+a.time,0)),
+    date:new Date().toLocaleDateString('ms-MY'),
+    person:studentName.trim()||'Pelajar JLPT N3'};
+}
+function pngWrap(ctx,text,maxWidth){
+  const lines=[];
+  for(const paragraph of String(text).split('\n')){
+    if(!paragraph){lines.push('');continue;}
+    let line='';
+    const words=paragraph.split(/(\s+)/);
+    for(let word of words){
+      if(!word)continue;
+      if(ctx.measureText(line+word).width<=maxWidth){line+=word;continue;}
+      if(line.trim()){lines.push(line.trim());line='';}
+      if(ctx.measureText(word).width<=maxWidth){line=word.trimStart();continue;}
+      for(const ch of Array.from(word)){
+        if(line&&ctx.measureText(line+ch).width>maxWidth){lines.push(line.trim());line='';}
+        line+=ch;
+      }
+    }
+    if(line.trim())lines.push(line.trim());
+  }
+  return lines;
+}
+function buildGrowthCanvas(){
+  const data=pngContent();
+  const W=720, pad=46, inner=W-pad*2;
+  const c=document.createElement('canvas');
+  const ctx=c.getContext('2d');
+  if(!ctx)throw new Error('Canvas tidak tersedia pada peranti ini.');
+  let y=0, draw=false;
+  const navy='#1F3343', muted='#55707D', teal='#087F78', line='#E1EAE9', pale='#F4FAF9';
+  function font(size,weight='400'){ctx.font=weight+' '+size+'px system-ui,-apple-system,"Noto Sans",sans-serif';}
+  function write(t,x,width,size=25,weight='400',color=navy,leading=1.45){
+    font(size,weight);ctx.fillStyle=color;ctx.textBaseline='top';
+    const lines=pngWrap(ctx,t,width);
+    if(draw)lines.forEach((str,i)=>ctx.fillText(str,x,y+i*size*leading));
+    y+=Math.max(1,lines.length)*size*leading;
+  }
+  function rule(){if(draw){ctx.strokeStyle=line;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad,y);ctx.stroke();}y+=28;}
+  function header(title){
+    y+=12;
+    write(title,pad,inner,29,'700',teal);
+    y+=11;
+  }
+  function panel(label,body){
+    const start=y;
+    const saved=y;
+    y+=29;
+    write(label,pad+27,inner-54,23,'700',teal);y+=8;
+    write(body,pad+27,inner-54,24,'400',navy);
+    y+=25;
+    const end=y;
+    if(draw){ctx.fillStyle=pale;ctx.fillRect(pad,start,inner,end-start);
+      ctx.fillStyle=teal;ctx.fillRect(pad,start,5,end-start);}
+    // Text is rendered after the panel background to keep contrast.
+    if(draw){
+      y=saved+29;
+      write(label,pad+27,inner-54,23,'700',teal);y+=8;
+      write(body,pad+27,inner-54,24,'400',navy);y= end;
+    }
+    y+=15;
+  }
+  function layout(){
+    y=48;
+    write('KAWAUSO  /  JLPT N3',pad,inner,20,'700',teal);y+=13;
+    write('Laporan Kemajuan Bacaan',pad,inner,40,'700',navy,1.25);y+=16;
+    write(data.person+'  ·  '+data.date,pad,inner,21,'400',muted);y+=30;
+    if(draw){ctx.fillStyle=pale;ctx.fillRect(pad,y,inner,124);}
+    y+=19;
+    write('SKOR  '+data.score+' / '+data.all+'     MASA  '+data.time,pad+22,inner-44,28,'700',navy);y+=8;
+    write('Setiap jawapan membantu anda belajar.',pad+22,inner-44,20,'400',muted);
+    y+=55;rule();
+    header('Apa yang anda sudah lakukan dengan baik');
+    if(data.good.length){
+      panel('Kekuatan dalam ujian ini', 'Syabas! Anda menjawab soalan dalam bidang '+data.good.join(' dan ')+' dengan betul. Terus gunakan cara membaca yang membantu anda.');
+    }else if(data.score>0){
+      panel('Pencapaian anda','Syabas! Anda telah menjawab '+data.score+' soalan dengan betul. Gunakan jawapan yang berjaya sebagai panduan untuk latihan seterusnya.');
+    }else{
+      panel('Usaha anda','Anda berjaya menyelesaikan 20 soalan bacaan. Itu ialah langkah pertama yang penting. Mari bina keyakinan secara berperingkat.');
+    }
+    header('Langkah seterusnya untuk berkembang');
+    if(!data.suggestions.length){
+      panel('Terus cabar diri','Semua jawapan betul kali ini! Cuba teks baharu untuk menguji strategi membaca yang sama.');
+    }else{
+      data.suggestions.forEach(({q},i)=>{
+        panel('Fokus '+(i+1)+' · '+pngFocus(q),
+          'Latih cara membaca ini dengan lebih teliti. Rujuk semula bukti dalam teks dan bandingkan dengan pilihan jawapan.');
+      });
+    }
+    if(data.tips.length){
+      header('Reading Tips yang disyorkan');
+      data.tips.forEach(n=>{
+        panel('Tip '+n,' '+(TIP_MALAY[n]||TIP_TITLES[n]));
+      });
+    }
+    rule();
+    write('Anda sedang membina kemahiran, satu langkah pada satu masa.',pad,inner,25,'700',teal);
+    y+=14;
+    write('Laporan ini ialah panduan latihan berdasarkan ujian ini, bukan label kebolehan kekal.',pad,inner,18,'400',muted);
+    y+=40;
+    return Math.ceil(y);
+  }
+  // Pass 1 measures content, pass 2 renders. No external library needed.
+  const height=layout(), scale=2;
+  if(height*scale>16000)throw new Error('Laporan terlalu panjang untuk disimpan sebagai satu imej.');
+  c.width=W*scale;c.height=height*scale;
+  ctx.scale(scale,scale);ctx.fillStyle='#FFFFFF';ctx.fillRect(0,0,W,height);
+  draw=true;layout();
+  return c;
+}
+function saveGrowthPNG(){
+  const msg=document.getElementById('pngSaveMessage');
+  const btn=document.getElementById('savePngButton');
+  msg.textContent='Menyediakan imej...';btn.disabled=true;
+  try{
+    const canvas=buildGrowthCanvas();
+    canvas.toBlob(blob=>{
+      btn.disabled=false;
+      if(!blob){msg.textContent='Tidak berjaya membuat PNG. Sila cuba semula.';return;}
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;a.download='JLPT-N3-Kemajuan-'+new Date().toISOString().slice(0,10)+'.png';
+      document.body.appendChild(a);a.click();a.remove();
+      msg.textContent='PNG telah disediakan. Jika anda menggunakan iPhone, buka imej yang dimuat turun dan simpan ke Photos.';
+      setTimeout(()=>URL.revokeObjectURL(url),60000);
+    },'image/png');
+  }catch(err){btn.disabled=false;msg.textContent='Tidak dapat menyimpan PNG pada peranti ini: '+err.message;}
 }
 
 function renderStudentReview(mode='wrong'){
