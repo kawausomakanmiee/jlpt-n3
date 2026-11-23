@@ -126,7 +126,17 @@ textarea{
 .tipbar > div{height:100%;background:linear-gradient(90deg,var(--teal),var(--violet))}
 .tag{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--amber);color:#4A3300;margin-left:6px}
 .tag.low{background:var(--line);color:var(--muted)}
-.review{border-top:1px solid var(--line);padding:16px 0}
+.review{border:1px solid var(--line);border-radius:13px;margin:10px 0;overflow:hidden;background:var(--card)}
+.review summary{cursor:pointer;padding:13px 14px;font-weight:800;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.review summary::-webkit-details-marker{display:none}
+.review summary::after{content:"⌄";font-size:22px;color:var(--violet);line-height:1}
+.review[open] summary::after{content:"⌃"}
+.review[open] summary{border-bottom:1px solid var(--line)}
+.review-body{padding:12px 14px;font-size:14px}
+.review-body p{margin:4px 0 10px;overflow-wrap:anywhere}
+.review-filter-row{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.review-filter{border:2px solid var(--line);background:var(--card);color:var(--ink);padding:8px 13px;border-radius:999px;font-weight:800}
+.review-filter[aria-pressed="true"]{border-color:var(--violet);background:color-mix(in srgb,var(--violet) 12%,var(--card))}
 .review h3{margin:0 0 6px}
 .small{font-size:13px}
 input[type=text]{
@@ -184,7 +194,11 @@ ul{padding-left:22px;margin:8px 0}
 
 <div class="card">
 <h2>📚 Semakan Jawapan</h2>
-<p class="muted small">Semak jawapan anda dan lihat sebab jawapan itu betul atau perlu diperbaiki.</p>
+<p class="muted small">Mulakan dengan soalan yang belum betul. Tekan setiap soalan untuk melihat jawapan dan penerangan.</p>
+<div class="review-filter-row" role="group" aria-label="Tapis semakan jawapan">
+  <button id="reviewWrongBtn" class="review-filter" type="button" aria-pressed="true" onclick="renderStudentReview('wrong')">❌ Salah sahaja</button>
+  <button id="reviewAllBtn" class="review-filter" type="button" aria-pressed="false" onclick="renderStudentReview('all')">Semua jawapan</button>
+</div>
 <div id="studentReview"></div>
 </div>
 
@@ -518,24 +532,34 @@ function renderStudentFeedback(score,total,overallAvg,tipStats,priorityTips){
   document.getElementById('studentFeedback').innerHTML=s;
 }
 
-function renderStudentReview(){
-  const box=document.getElementById('studentReview'); box.innerHTML='';
-  testQs.forEach((q,i)=>{
-    const a=answers[i];
-    const choicesHtml = q.choicesHtml||q.choices;
+function renderStudentReview(mode='wrong'){
+  const box=document.getElementById('studentReview');
+  box.innerHTML='';
+  document.getElementById('reviewWrongBtn').setAttribute('aria-pressed',String(mode==='wrong'));
+  document.getElementById('reviewAllBtn').setAttribute('aria-pressed',String(mode==='all'));
+  const items=testQs.map((q,i)=>({q,a:answers[i],i}))
+    .filter(({a})=>mode==='all'||!a.isCorrect);
+  if(!items.length){
+    box.innerHTML='<p class="small">Tahniah! Semua jawapan betul. Pilih “Semua jawapan” jika anda mahu menyemak penerangan.</p>';
+    return;
+  }
+  items.forEach(({q,a,i})=>{
+    const choicesHtml=q.choicesHtml||q.choices;
     const selectedText=choicesHtml[a.orig.charCodeAt(0)-65];
     const correctText=choicesHtml[q.correct.charCodeAt(0)-65];
-    const explanation = a.isCorrect? q.core : (q.wrong[a.orig.charCodeAt(0)-65]||q.core);
-    const d=document.createElement('div'); d.className='review';
-    let html='<h3>Q'+(i+1)+' '+(a.isCorrect?'✅':'❌')+'</h3>'+
-      '<p><b>Jawapan anda:</b> '+selectedText+'<br>'+
-      '<b>Jawapan betul:</b> '+correctText+'<br>'+
-      '<span class="muted small">Masa: '+fmt(a.time)+(a.timeCategory==='B'?' <span class="tag low">Betul, tetapi agak lambat</span>':'')+'</span></p>'+
+    const explanation=a.isCorrect?q.core:(q.wrong[a.orig.charCodeAt(0)-65]||q.core);
+    const d=document.createElement('details');
+    d.className='review';
+    let html='<summary><span>Q'+(i+1)+' '+(a.isCorrect?'✅ Betul':'❌ Salah')+'</span>'+
+      '<span class="muted small">'+fmt(a.time)+'</span></summary>'+
+      '<div class="review-body"><p><b>Jawapan anda:</b> '+selectedText+'</p>'+
+      '<p><b>Jawapan betul:</b> '+correctText+'</p>'+
       '<p><b>Petunjuk:</b> '+escapeHtml(q.where)+'</p>'+
-      '<p>'+escapeHtml(explanation)+'</p>';
+      '<p><b>Penerangan:</b> '+escapeHtml(explanation)+'</p>';
     if(a.reason){
       html+='<p class="small"><b>Sebab anda:</b> '+escapeHtml(a.reason)+'</p>';
     }
+    html+='</div>';
     d.innerHTML=html;
     box.appendChild(d);
   });
