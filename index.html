@@ -154,19 +154,19 @@ ul{padding-left:22px;margin:8px 0}
 <div class="wrap">
 
 <section id="start" class="card">
-<h1>🎯 JLPT N3 読解診断</h1>
-<p class="muted">20問で読解のつまずきを振り返り、次の練習につなげます。</p>
+<h1>🎯 Diagnostik Bacaan JLPT N3</h1>
+<p class="muted">Jawab 20 soalan untuk mengetahui kemajuan dan merancang latihan seterusnya.</p>
 <ul>
-<li>問題と選択肢の順番は毎回シャッフルされます。</li>
-<li>時間制限はありませんが、実際にかかった時間を記録します。</li>
-<li>終了後、あなた（学習者）にはマレー語のフィードバックが表示されます。</li>
+<li>Susunan soalan dan pilihan jawapan berubah setiap kali.</li>
+<li>Tiada had masa, tetapi masa menjawab akan direkodkan.</li>
+<li>Jawapan dan penerangan boleh disemak selepas tamat ujian.</li>
 </ul>
-<label>Student ID（必須）</label>
-<input id="studentId" type="text" placeholder="例：MYS001">
-<label style="margin-top:14px;display:block">名前・ニックネーム（任意）</label>
-<input id="studentName" type="text" placeholder="例：Aina">
+<label>Student ID (wajib)</label>
+<input id="studentId" type="text" placeholder="Contoh: MYS001">
+<label style="margin-top:14px;display:block">Nama atau nama panggilan (pilihan)</label>
+<input id="studentName" type="text" placeholder="Contoh: Aina">
 <p id="startError" class="small" style="display:none"></p>
-<p style="margin-top:18px"><button class="bigbtn" onclick="startTest()">はじめる</button></p>
+<p style="margin-top:18px"><button class="bigbtn" onclick="startTest()">Mula ujian</button></p>
 </section>
 
 <section id="test" class="hidden">
@@ -212,7 +212,7 @@ ul{padding-left:22px;margin:8px 0}
 <div class="card">
 <p class="muted small" id="saveStatus">Menyimpan keputusan...</p>
 <div id="fallbackZone"></div>
-<p><button class="bigbtn secondary" onclick="location.reload()">もう一度受ける</button></p>
+<p><button class="bigbtn secondary" onclick="location.reload()">Cuba lagi</button></p>
 </div>
 </section>
 
@@ -282,7 +282,7 @@ function startTest(){
   studentId=document.getElementById('studentId').value.trim();
   studentName=document.getElementById('studentName').value.trim();
   if(!studentId){
-    setStartMessage('Student IDを入力してください。', true);
+    setStartMessage('Sila masukkan Student ID.', true);
     return;
   }
   const btn=document.querySelector('#start .bigbtn');
@@ -294,7 +294,7 @@ function startTest(){
   }
 
   btn.disabled=true;
-  setStartMessage('Student IDを確認しています…', false);
+  setStartMessage('Sedang menyemak Student ID…', false);
   fetch(GAS_URL, {
     method:'POST',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
@@ -302,22 +302,22 @@ function startTest(){
   }).then(r=>r.json()).then(res=>{
     btn.disabled=false;
     if(!res || !res.ok){
-      setStartMessage('確認中にエラーが発生しました：' + (res && res.error ? res.error : '(サーバーから詳細が返りませんでした)'), true);
+      setStartMessage('Ralat semasa semakan: ' + (res && res.error ? res.error : '(tiada butiran daripada pelayan)'), true);
       return;
     }
     if(!res.found){
-      setStartMessage('このStudent IDは登録されていません。先生に確認してください。', true);
+      setStartMessage('Student ID ini belum didaftarkan. Sila hubungi guru anda.', true);
       return;
     }
     if(!res.active){
-      setStartMessage('このIDは現在無効になっています。先生に確認してください。', true);
+      setStartMessage('Student ID ini tidak aktif. Sila hubungi guru anda.', true);
       return;
     }
     setStartMessage('', false);
     actualStartTest();
   }).catch(()=>{
     btn.disabled=false;
-    setStartMessage('通信エラーのため確認できませんでした。もう一度お試しください。', true);
+    setStartMessage('Ralat sambungan. Sila cuba lagi.', true);
   });
 }
 function actualStartTest(){
@@ -341,14 +341,14 @@ function updateTimer(){
   const q=testQs[idx];
   const elapsed=(performance.now()-qStartedAt)/1000;
   const box=document.getElementById('timerbox');
-  box.textContent=fmt(elapsed)+" ／ 目安"+q.seconds+"秒";
+  box.textContent=fmt(elapsed)+" / Sasaran "+q.seconds+" saat";
   box.classList.toggle('over', elapsed>q.seconds);
 }
 function renderQ(){
   stage='answering';
   const q=testQs[idx];
   qStartedAt=performance.now();
-  document.getElementById('qCount').textContent="質問 "+(idx+1)+" / "+testQs.length;
+  document.getElementById('qCount').textContent="Soalan "+(idx+1)+" / "+testQs.length;
   document.getElementById('bar').style.width=((idx/testQs.length)*100)+"%";
   document.getElementById('question').innerHTML=q.questionHtml||escapeHtml(q.question);
   document.getElementById('passage').innerHTML=q.passageHtml||escapeHtml(q.passage);
@@ -362,7 +362,7 @@ function renderQ(){
   });
   document.getElementById('resultZone').innerHTML='';
   const btn=document.getElementById('mainBtn');
-  btn.textContent='回答する';
+  btn.textContent='Hantar jawapan';
   btn.disabled=true;
   btn.onclick=submitAnswer;
 }
@@ -374,59 +374,24 @@ function selectChoice(orig,el){
   document.getElementById('mainBtn').disabled=false;
 }
 function submitAnswer(){
-  const selectedEl = document.querySelector('#choices .choice.selected');
-  if(!selectedEl) return;
-  const orig = selectedEl.dataset.orig;
-  const q=testQs[idx];
-  const startTime = qStartedAt;
-  const endTime = performance.now();
-  const time=(endTime-startTime)/1000;
-  const ok = orig===q.correct;
-  answers[idx]={
-    questionId:q.id, questionNumber:idx+1, orig:orig, correct:q.correct, isCorrect:ok,
-    time:time, startTime:startTime, endTime:endTime, reason:'', relatedTips:q.relatedTips
-  };
+  if(stage!=='answering')return;
+  const selectedEl=document.querySelector('#choices .choice.selected');
+  if(!selectedEl)return;
+  const orig=selectedEl.dataset.orig, q=testQs[idx];
+  const startTime=qStartedAt, endTime=performance.now(), time=(endTime-startTime)/1000;
+  answers[idx]={questionId:q.id,questionNumber:idx+1,orig,correct:q.correct,isCorrect:orig===q.correct,time,startTime,endTime,reason:'',relatedTips:q.relatedTips};
   stage='answered';
-  const box=document.getElementById('timerbox');
-  box.textContent=fmt(time)+" ／ 目安"+q.seconds+"秒";
-  box.classList.toggle('over', time>q.seconds);
-  document.querySelectorAll('#choices .choice').forEach(el=>{
-    el.classList.add('locked');
-    el.onclick=null;
-    if(el.dataset.orig===q.correct) el.classList.add('correct');
-    else if(el===selectedEl) el.classList.add('wrongpick');
-  });
-  const selIdx = orig.charCodeAt(0)-65;
-  const explanation = ok? q.core : (q.wrong[selIdx]||q.core);
-
-  let html='<div class="resultbanner '+(ok?'good':'bad')+'">'+(ok?'✓ 正解！':'✗ 不正解')+'</div>';
-  if(q.hasReason){
-    html+='<label class="small">なぜこの答えを選びましたか？（任意）</label>'+
-      '<textarea id="reasonBox" placeholder="Contoh: kerana ayat itu ada dalam teks..."></textarea>';
-  }
-  html+='<div class="explain">'+
-    '<h4>💡 どこを見るか</h4><p>'+escapeHtml(q.where)+'</p>'+
-    '<h4>📖 解説</h4><p>'+escapeHtml(explanation)+'</p>'+
-    '<h4>📌 本文の根拠</h4><p>'+escapeHtml(q.evidence)+'</p>'+
-    '<h4>✨ Reading Tip</h4><p>'+escapeHtml(q.reading_tip)+'</p>'+
-    '</div>';
-  document.getElementById('resultZone').innerHTML=html;
-
+  document.getElementById('timerbox').textContent=fmt(time)+' / Sasaran '+q.seconds+' saat';
+  document.querySelectorAll('#choices .choice').forEach(el=>{el.classList.add('locked');el.onclick=null;});
+  document.getElementById('resultZone').innerHTML='<p class="small muted">Jawapan direkodkan. Anda boleh menyemak penerangan selepas menjawab semua 20 soalan.</p>';
   const btn=document.getElementById('mainBtn');
   btn.disabled=false;
-  btn.textContent = idx===testQs.length-1 ? '結果を見る' : '次の問題へ';
+  btn.textContent=idx===testQs.length-1?'Lihat keputusan':'Soalan seterusnya';
   btn.onclick=nextQuestion;
 }
 function nextQuestion(){
-  const reasonBox=document.getElementById('reasonBox');
-  if(reasonBox) answers[idx].reason=reasonBox.value.trim();
-  if(idx<testQs.length-1){
-    idx++;
-    renderQ();
-    window.scrollTo(0,0);
-  }else{
-    finish();
-  }
+  if(stage!=='answered')return;
+  if(idx<testQs.length-1){idx++;renderQ();window.scrollTo(0,0);}else finish();
 }
 
 /* ===================== 集計ロジック ===================== */
@@ -505,37 +470,45 @@ function skillStats(){
   return Object.values(groups);
 }
 function learningSuggestions(){
-  // Recommend based on the actual missed question, not pseudo-measured Tip scores.
-  const missed=testQs.map((q,i)=>({q,a:answers[i]})).filter(x=>!x.a.isCorrect);
-  return missed.sort((x,y)=>(y.q.difficulty||0)-(x.q.difficulty||0)).slice(0,3);
+  // Multiple misses in one skill group receive priority; one example per skill.
+  const groups=skillStats().filter(g=>g.wrong.length);
+  groups.sort((a,b)=>b.wrong.length-a.wrong.length ||
+    (b.wrong.length/b.total)-(a.wrong.length/a.total) ||
+    b.total-a.total || a.label.localeCompare(b.label,'ja'));
+  return groups.slice(0,3).map(g=>{
+    const example=[...g.wrong].sort((a,b)=>(b.q.difficulty||0)-(a.q.difficulty||0))[0];
+    return {...example,group:g,wrongCount:g.wrong.length,sampleCount:g.total};
+  });
 }
 function renderStudentFeedback(score,total,overallAvg,tipStats,priorityTips){
   const stats=skillStats(), suggestions=learningSuggestions();
-  let s='<h2>Gambaran pembelajaran anda</h2>';
-  s+='<p>Anda menjawab <b>'+score+' daripada '+testQs.length+' soalan</b> dengan betul. Masa menjawab: <b>'+fmt(total)+'</b> (purata '+fmt(overallAvg)+' setiap soalan).</p>';
-  s+='<p class="small muted">Masa ini hanya merangkumi masa memilih jawapan, bukan membaca penjelasan selepas menjawab. Ini gambaran awal untuk merancang latihan, bukan label kekuatan atau kelemahan yang kekal.</p>';
-  const positive=stats.filter(g=>g.total>=2&&g.correct===g.total).slice(0,3);
-  s+='<h2>Apa yang berjalan baik kali ini</h2>';
+  let s='<h2>Perkembangan bacaan anda</h2>';
+  s+='<p>Syabas kerana menamatkan ujian! Anda menjawab <b>'+score+' daripada '+testQs.length+' soalan</b> dengan betul. Masa menjawab: <b>'+fmt(total)+'</b> (purata '+fmt(overallAvg)+' setiap soalan).</p>';
+  s+='<p class="small muted">Ini gambaran awal daripada 20 soalan untuk merancang latihan, bukan label kemampuan yang kekal.</p>';
+  const positive=stats.filter(g=>g.correct>0).sort((a,b)=>(b.correct/b.total)-(a.correct/a.total)||b.correct-a.correct).slice(0,2);
+  s+='<h2>Apa yang anda sudah lakukan dengan baik</h2>';
   if(positive.length){
-    s+='<ul>'+positive.map(g=>'<li>'+escapeHtml(g.label)+'：'+g.correct+'/'+g.total+' soalan dijawab dengan betul.</li>').join('')+'</ul>';
-  }else{s+='<p class="small">Semak setiap jawapan betul untuk mengenal pasti cara membaca yang berkesan bagi anda.</p>';}
+    s+='<ul>'+positive.map(g=>'<li><b>'+escapeHtml(PNG_SKILL_MALAY[g.label]||g.label)+'</b> — '+g.correct+' daripada '+g.total+' soalan dijawab dengan betul.</li>').join('')+'</ul>';
+  }else{s+='<p>Anda telah menamatkan semua soalan. Ini langkah pertama yang penting untuk membina keyakinan membaca.</p>';}
   s+='<h2>Fokus latihan seterusnya</h2>';
-  if(!suggestions.length){s+='<p>Semua jawapan betul kali ini. Cuba teks baharu untuk memastikan strategi yang sama masih berkesan.</p>';}
-  suggestions.forEach(({q,a})=>{
-    const t=q.relatedTips||[];
-    const why=(q.wrong&&q.wrong[a.orig.charCodeAt(0)-65])||'Lihat semula bukti dalam teks dan bandingkan dengan pilihan jawapan.';
-    s+='<div class="tipcard"><b>'+escapeHtml(q.focusSkill||q.skillGroup)+'</b>'+
-      '<p class="small"><b>Soalan '+escapeHtml(q.id)+'：</b>'+escapeHtml(why)+'</p>'+
-      '<p class="small"><b>Latihan dicadangkan：</b>'+t.map(n=>'Tip '+n+' '+escapeHtml(TIP_TITLES[n])).join(' / ')+'</p>'+
-      '<p class="small muted">Ini kemungkinan punca kesilapan berdasarkan pilihan anda. Cuba soalan lain untuk menyemaknya.</p></div>';
+  if(!suggestions.length)s+='<p>Semua jawapan betul! Teruskan dengan teks baharu untuk menguji strategi yang sama.</p>';
+  suggestions.forEach(({q,a,group,wrongCount,sampleCount})=>{
+    const why=(q.wrong&&q.wrong[a.orig.charCodeAt(0)-65])||'Semak bukti dalam teks dan bandingkan dengan pilihan jawapan.';
+    const tips=(q.relatedTips||[]).slice(0,2);
+    s+='<div class="tipcard"><b>'+escapeHtml(PNG_SKILL_MALAY[group.label]||group.label)+'</b>'+
+      '<p class="small">Dalam ujian ini, '+wrongCount+' daripada '+sampleCount+' soalan dalam bidang ini belum dijawab dengan betul.</p>'+
+      '<p class="small"><b>Contoh: '+escapeHtml(q.id)+'</b></p>'+
+      '<p class="small">'+escapeHtml(why)+'</p>'+
+      '<p class="small"><b>Latihan dicadangkan:</b> '+tips.map(n=>'Tip '+n+' — '+escapeHtml(TIP_MALAY[n]||TIP_TITLES[n])).join(' / ')+'</p>'+
+      '<p class="small muted">Ini cadangan latihan berdasarkan jawapan anda, bukan penilaian muktamad.</p></div>';
   });
-  s+='<h2>Jenis bacaan yang ingin anda latih</h2>';
-  s+='<p class="small muted">Bilangan soalan bagi setiap jenis masih kecil. Nombor di bawah ialah keputusan untuk ujian ini sahaja, bukan ukuran kebolehan tetap.</p>';
+  s+='<h2>Ringkasan kemahiran bacaan</h2>';
+  s+='<p class="small muted">Bilangan soalan bagi setiap bidang masih kecil. Keputusan ini hanya menggambarkan ujian kali ini.</p>';
   stats.sort((a,b)=>(a.correct/a.total)-(b.correct/b.total)).forEach(g=>{
-    s+='<div class="tipcard"><div class="toprow"><span>'+escapeHtml(g.label)+'</span><span>'+g.correct+'/'+g.total+'</span></div></div>';
+    s+='<div class="tipcard"><div class="toprow"><span>'+escapeHtml(PNG_SKILL_MALAY[g.label]||g.label)+'</span><span>'+g.correct+'/'+g.total+'</span></div></div>';
   });
-  s+='<h2>Cuba, perbaiki, semak semula</h2>';
-  s+='<p class="small">1. Baca bukti dalam teks untuk soalan yang tersilap. 2. Amalkan Reading Tips yang dicadangkan. 3. Cuba soalan baharu dengan kemahiran yang sama dan lihat perubahan anda.</p>';
+  s+='<h2>Langkah kecil untuk maju</h2>';
+  s+='<p class="small">Semak jawapan selepas ujian, amalkan Reading Tips dan cuba teks baharu. Setiap usaha membantu anda membina keyakinan.</p>';
   document.getElementById('studentFeedback').innerHTML=s;
 }
 
@@ -675,9 +648,9 @@ function buildGrowthCanvas(){
     if(!data.suggestions.length){
       panel('Terus cabar diri','Semua jawapan betul kali ini! Cuba teks baharu untuk menguji strategi membaca yang sama.');
     }else{
-      data.suggestions.forEach(({q},i)=>{
+      data.suggestions.forEach(({q,wrongCount,sampleCount},i)=>{
         panel('Fokus '+(i+1)+' · '+pngFocus(q),
-          'Cuba baca semula bahagian teks yang berkaitan, kemudian periksa sama ada pilihan jawapan benar-benar sepadan dengan maklumat dalam teks.');
+          'Dalam ujian ini, '+wrongCount+' daripada '+sampleCount+' soalan dalam bidang ini belum dijawab dengan betul. Semak bukti dalam teks dan cuba latihan yang disyorkan.');
       });
     }
     if(data.tips.length){
@@ -791,10 +764,11 @@ function makeTeacherReport(score,total,overallAvg,tipStats,priorityTips){
     lines.push('・'+g.label+'：'+g.correct+'/'+g.total+'問正解（今回の結果）');
   });
   lines.push('');
-  lines.push('【弱点克服に向けた練習提案】');
+  lines.push('【成長につながる優先練習提案（反復するつまずきを優先）】');
   const suggestions=learningSuggestions();
   if(!suggestions.length) lines.push('今回は全問正解。新しい問題で同じスキルを再確認することを推奨します。');
-  suggestions.forEach(({q,a})=>{
+  suggestions.forEach(({q,a,wrongCount,sampleCount})=>{
+    lines.push('・同じ読解領域での誤答：'+wrongCount+'/'+sampleCount+'問（今回の問題内での参考値）');
     const reason=(q.teacherB&&q.teacherB[a.orig])||'本文の根拠と選択した答えの違いを確認する。';
     lines.push('・'+q.id+'／確認する力：'+q.focusSkill+'／選択肢：'+a.orig);
     lines.push('  つまずきの仮説：'+reason);
@@ -854,22 +828,22 @@ function sendToGAS(payload, teacherReportText){
   const statusEl=document.getElementById('saveStatus');
   const fallbackZone=document.getElementById('fallbackZone');
   function showFallback(){
-    statusEl.textContent='結果の自動保存ができませんでした。下のボタンで結果をコピーし、先生に送ってください。';
+    statusEl.textContent='Keputusan tidak dapat disimpan secara automatik. Salin laporan di bawah dan hantar kepada guru.';
     fallbackZone.innerHTML='<textarea id="fallbackText" readonly style="min-height:200px">'+escapeHtml(teacherReportText)+'</textarea>'+
-      '<p style="margin-top:10px"><button class="bigbtn secondary" onclick="copyFallback()">結果をコピー</button></p>';
+      '<p style="margin-top:10px"><button class="bigbtn secondary" onclick="copyFallback()">Salin laporan</button></p>';
   }
   if(!GAS_URL){
     showFallback();
     return;
   }
-  statusEl.textContent='結果を保存しています…';
+  statusEl.textContent='Sedang menyimpan keputusan…';
   fetch(GAS_URL, {
     method:'POST',
     headers:{'Content-Type':'text/plain;charset=utf-8'}, // GAS doPostはtext/plainで受けてJSON.parseするのが安定
     body: JSON.stringify(payload)
   }).then(r=>r.json()).then(res=>{
     if(res && res.ok){
-      statusEl.textContent='結果を保存し、先生に送信しました。';
+      statusEl.textContent='Keputusan telah disimpan dan dihantar kepada guru.';
     }else{
       showFallback();
     }
